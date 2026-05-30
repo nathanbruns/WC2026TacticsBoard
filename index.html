@@ -28,6 +28,33 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:#fff;font-famil
 .xbtn:hover{background:#c0392b}
 .clr-btn{font-size:11px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;padding:5px 10px;border-radius:4px;border:1px solid rgba(255,255,255,.2);background:transparent;color:var(--muted);cursor:pointer;white-space:nowrap}
 .clr-btn:hover{background:rgba(255,255,255,.07);color:#fff}
+.save-btn{font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase;padding:5px 10px;border-radius:4px;border:none;background:#1e6830;color:#fff;cursor:pointer;white-space:nowrap;transition:.12s}
+.save-btn:hover{background:#27ae60}
+.load-btn{font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase;padding:5px 10px;border-radius:4px;border:1px solid rgba(79,195,247,.4);background:rgba(79,195,247,.1);color:var(--accent);cursor:pointer;white-space:nowrap;transition:.12s}
+.load-btn:hover{background:rgba(79,195,247,.2);border-color:var(--accent)}
+/* SAVE MODAL */
+.smo{position:fixed;z-index:999;inset:0;background:rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center}
+.smo-box{background:#12121e;border:1.5px solid var(--accent);border-radius:12px;width:480px;max-width:95vw;max-height:80vh;display:flex;flex-direction:column;overflow:hidden}
+.smo-hdr{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.smo-title{font-size:15px;font-weight:800;letter-spacing:1px;text-transform:uppercase}
+.smo-body{overflow-y:auto;padding:12px}
+.save-name-row{display:flex;gap:8px;margin-bottom:14px}
+.save-name-input{flex:1;padding:8px 12px;background:rgba(255,255,255,.07);border:1.5px solid var(--border);border-radius:6px;color:#fff;font-size:13px;font-weight:700;font-family:inherit;outline:none}
+.save-name-input:focus{border-color:var(--accent)}
+.save-now-btn{padding:8px 16px;border-radius:6px;border:none;background:#27ae60;color:#fff;font-size:12px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;cursor:pointer;white-space:nowrap;font-family:inherit}
+.save-now-btn:hover{background:#2ecc71}
+.saves-list{display:flex;flex-direction:column;gap:6px}
+.save-item{display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:8px;border:1px solid var(--border);background:rgba(255,255,255,.04)}
+.save-item:hover{background:rgba(255,255,255,.07)}
+.save-item-info{flex:1;min-width:0}
+.save-item-name{font-size:13px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.save-item-meta{font-size:10px;color:var(--muted);margin-top:2px}
+.save-item-btns{display:flex;gap:5px;flex-shrink:0}
+.si-load{padding:5px 10px;border-radius:5px;border:none;background:rgba(79,195,247,.2);color:var(--accent);font-size:11px;font-weight:800;cursor:pointer;font-family:inherit;text-transform:uppercase;letter-spacing:.5px}
+.si-load:hover{background:rgba(79,195,247,.35)}
+.si-del{padding:5px 8px;border-radius:5px;border:1px solid rgba(178,34,52,.4);background:transparent;color:rgba(178,34,52,.7);font-size:11px;font-weight:800;cursor:pointer;font-family:inherit}
+.si-del:hover{background:rgba(178,34,52,.2);color:var(--red);border-color:var(--red)}
+.no-saves{text-align:center;color:var(--muted);font-size:12px;padding:24px 0;line-height:1.6}
 
 /* BODY */
 .body{display:flex;flex:1;overflow:hidden}
@@ -87,9 +114,23 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:#fff;font-famil
 /* ROLE MODAL */
 .mo{position:fixed;z-index:999;inset:0;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center}
 ::-webkit-scrollbar{width:3px}::-webkit-scrollbar-thumb{background:rgba(255,255,255,.15);border-radius:2px}
+
+/* LANDSCAPE LOCK */
+#rotate-overlay{display:none;position:fixed;inset:0;z-index:9999;background:#0e0e1c;flex-direction:column;align-items:center;justify-content:center;gap:18px}
+@media (orientation:portrait){#rotate-overlay{display:flex}}
+.rotate-icon{font-size:72px;animation:spin 2s ease-in-out infinite}
+@keyframes spin{0%,100%{transform:rotate(0deg)}40%{transform:rotate(90deg)}60%{transform:rotate(90deg)}}
+.rotate-msg{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:#fff;text-align:center}
+.rotate-sub{font-family:'Barlow Condensed',sans-serif;font-size:14px;color:#99aabb;letter-spacing:.5px;text-align:center}
 </style>
 </head>
 <body>
+
+<div id="rotate-overlay">
+  <div class="rotate-icon">📱</div>
+  <div class="rotate-msg">Rotate Your Device</div>
+  <div class="rotate-sub">This app works best in landscape mode</div>
+</div>
 <div class="app">
 <div class="hdr">
   <div class="hdr-l">
@@ -112,6 +153,8 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:#fff;font-famil
   </div>
   <div class="hdr-r">
     <button class="clr-btn" id="btn-clear-all">Clear All</button>
+    <button class="save-btn" id="btn-save">💾 Save</button>
+    <button class="load-btn" id="btn-load">📂 Saves</button>
     <button class="xbtn" id="xbtn">⬇ Export PNG</button>
   </div>
 </div>
@@ -159,6 +202,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:#fff;font-famil
 </div>
 <div id="tpicker" class="tpicker" style="display:none"></div>
 <div id="mo" class="mo" style="display:none"></div>
+<div id="smo" class="smo" style="display:none"></div>
 
 <script>
 // ═══════════════════════════════════════════════════
@@ -649,13 +693,22 @@ cv.addEventListener('touchend',e=>{
 });
 
 // ── TOOLBAR ──
+function setTool(id){
+  tool=id;
+  document.querySelectorAll('.tb-btn[id^="tool-"]').forEach(x=>x.classList.remove('active'));
+  const b=document.getElementById('tool-'+id);if(b)b.classList.add('active');
+  cv.style.cursor=id==='select'?'default':'crosshair';
+  isDrawing=false;drawStart=null;freehandPts=[];
+}
 ['select','arrow','darrow','curve','line','circle','freehand'].forEach(id=>{
   const b=document.getElementById('tool-'+id);if(!b)return;
   b.onclick=()=>{
-    tool=id;
-    document.querySelectorAll('.tb-btn[id^="tool-"]').forEach(x=>x.classList.remove('active'));
-    b.classList.add('active');
-    cv.style.cursor=id==='select'?'default':'crosshair';
+    // Clicking the already-active drawing tool toggles back to select
+    if(tool===id && id!=='select'){
+      setTool('select');
+    } else {
+      setTool(id);
+    }
   };
 });
 document.querySelectorAll('.swatch').forEach(el=>{
@@ -786,6 +839,172 @@ document.getElementById('btn-away').onclick=()=>openTeamPicker('away');
 
 // ── EXPORT ──
 document.getElementById('xbtn').onclick=()=>{const a=document.createElement('a');a.download='WC2026_Tactics.png';a.href=cv.toDataURL('image/png');a.click();};
+
+
+// ── SAVE / LOAD ──
+const STORAGE_KEY = 'wc2026_saves';
+
+function getSaves(){
+  try{ return JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]'); }
+  catch(e){ return []; }
+}
+function setSaves(saves){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(saves));
+}
+
+function serializeState(){
+  return {
+    homeTeam, awayTeam,
+    tokens: tokens.map(t=>({
+      playerNo: t.player.no,
+      playerSide: t.side,
+      x: Math.round(t.x*100)/100,
+      y: Math.round(t.y*100)/100,
+      role: t.role,
+      side: t.side
+    })),
+    drawings
+  };
+}
+
+function deserializeState(state){
+  homeTeam = state.homeTeam || 'USA';
+  awayTeam = state.awayTeam || null;
+  drawings = state.drawings || [];
+  tokens = [];
+  (state.tokens||[]).forEach(t=>{
+    const teamKey = t.side==='home' ? homeTeam : awayTeam;
+    if(!teamKey||!TEAMS[teamKey]) return;
+    const player = TEAMS[teamKey].players.find(p=>p.no===t.playerNo);
+    if(!player) return;
+    tokens.push({ player, x:t.x, y:t.y, role:t.role, side:t.side });
+  });
+  updateTeamButtons();
+  renderPanels();
+  draw();
+}
+
+function openSaveModal(){
+  const ov = document.getElementById('smo');
+  ov.innerHTML=''; ov.style.display='flex';
+
+  const box = document.createElement('div'); box.className='smo-box';
+
+  // Header
+  const hdr = document.createElement('div'); hdr.className='smo-hdr';
+  hdr.innerHTML='<span class="smo-title">💾 Save / Load Matchup</span>';
+  const cls = document.createElement('button');
+  cls.textContent='×'; cls.style.cssText='background:transparent;border:none;color:var(--muted);font-size:18px;cursor:pointer;font-family:inherit;line-height:1';
+  cls.onclick=()=>ov.style.display='none';
+  hdr.appendChild(cls); box.appendChild(hdr);
+
+  const body = document.createElement('div'); body.className='smo-body';
+
+  // Save new section
+  const saveLabel = document.createElement('div');
+  saveLabel.style.cssText='font-size:10px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:8px';
+  saveLabel.textContent='Save Current State';
+  body.appendChild(saveLabel);
+
+  const nameRow = document.createElement('div'); nameRow.className='save-name-row';
+  const inp = document.createElement('input'); inp.className='save-name-input'; inp.type='text';
+  // Auto-suggest name from current matchup
+  const homeName = homeTeam||'Home';
+  const awayName = awayTeam||'Away';
+  const dateStr = new Date().toLocaleDateString('en-US',{month:'short',day:'numeric'});
+  inp.value = `${homeName} vs ${awayName} — ${dateStr}`;
+  inp.placeholder='Name this matchup…';
+  inp.select();
+  nameRow.appendChild(inp);
+
+  const saveBtn = document.createElement('button'); saveBtn.className='save-now-btn'; saveBtn.textContent='Save';
+  saveBtn.onclick=()=>{
+    const name = inp.value.trim() || `Matchup ${Date.now()}`;
+    const saves = getSaves();
+    saves.unshift({ id: Date.now(), name, date: new Date().toISOString(), state: serializeState() });
+    setSaves(saves);
+    buildSavesList();
+    inp.value='';
+    // Flash confirmation
+    saveBtn.textContent='✓ Saved!'; saveBtn.style.background='#1e6830';
+    setTimeout(()=>{ saveBtn.textContent='Save'; saveBtn.style.background=''; },1500);
+  };
+  nameRow.appendChild(saveBtn);
+  body.appendChild(nameRow);
+
+  // Saves list section
+  const listLabel = document.createElement('div');
+  listLabel.style.cssText='font-size:10px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;padding-top:4px;border-top:1px solid var(--border)';
+  listLabel.style.marginTop='6px'; listLabel.style.paddingTop='14px';
+  listLabel.textContent='Saved Matchups';
+  body.appendChild(listLabel);
+
+  const listDiv = document.createElement('div'); listDiv.className='saves-list'; listDiv.id='saves-list-inner';
+  body.appendChild(listDiv);
+
+  box.appendChild(body); ov.appendChild(box);
+  ov.onclick=e=>{if(e.target===ov)ov.style.display='none';};
+
+  buildSavesList();
+  setTimeout(()=>inp.select(),50);
+}
+
+function buildSavesList(){
+  const listDiv = document.getElementById('saves-list-inner');
+  if(!listDiv) return;
+  listDiv.innerHTML='';
+  const saves = getSaves();
+
+  if(!saves.length){
+    listDiv.innerHTML='<div class="no-saves">No saved matchups yet.<br>Set up a lineup above and hit Save!</div>';
+    return;
+  }
+
+  saves.forEach((save,idx)=>{
+    const item = document.createElement('div'); item.className='save-item';
+
+    const info = document.createElement('div'); info.className='save-item-info';
+    const nm = document.createElement('div'); nm.className='save-item-name'; nm.textContent=save.name;
+    const meta = document.createElement('div'); meta.className='save-item-meta';
+    const d = new Date(save.date);
+    const st = save.state;
+    const pCount = (st.tokens||[]).length;
+    const dCount = (st.drawings||[]).length;
+    const home = st.homeTeam||'?'; const away = st.awayTeam||'?';
+    const homeFlag = TEAMS[home]?TEAMS[home].flag:'🏠';
+    const awayFlag = TEAMS[away]?TEAMS[away].flag:'🌍';
+    meta.textContent = `${homeFlag} ${home} vs ${awayFlag} ${away}  ·  ${pCount} players  ·  ${dCount} drawings  ·  ${d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}`;
+    info.appendChild(nm); info.appendChild(meta);
+
+    const btns = document.createElement('div'); btns.className='save-item-btns';
+
+    const loadBtn = document.createElement('button'); loadBtn.className='si-load'; loadBtn.textContent='Load';
+    loadBtn.onclick=()=>{
+      if(confirm(`Load "${save.name}"? Current state will be replaced.`)){
+        deserializeState(save.state);
+        document.getElementById('smo').style.display='none';
+      }
+    };
+
+    const delBtn = document.createElement('button'); delBtn.className='si-del'; delBtn.textContent='✕';
+    delBtn.title='Delete save';
+    delBtn.onclick=()=>{
+      if(confirm(`Delete "${save.name}"?`)){
+        const saves2=getSaves(); saves2.splice(idx,1); setSaves(saves2); buildSavesList();
+      }
+    };
+
+    btns.appendChild(loadBtn); btns.appendChild(delBtn);
+    item.appendChild(info); item.appendChild(btns);
+    listDiv.appendChild(item);
+  });
+}
+
+document.getElementById('btn-save').onclick=()=>{
+  // Quick-save with auto name, or open modal
+  openSaveModal();
+};
+document.getElementById('btn-load').onclick=()=>openSaveModal();
 
 // ── INIT ──
 window.addEventListener('resize',resize);
