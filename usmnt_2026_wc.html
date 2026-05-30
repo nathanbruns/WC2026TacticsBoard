@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>2026 FIFA World Cup Tactical Board</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--red:#B22234;--navy:#3C3B6E;--gold:#f0c040;--accent:#4fc3f7;--muted:#99aabb;--border:rgba(255,255,255,0.1);--bg:#0e0e1c}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:#fff;font-family:'Barlow Condensed',sans-serif}
+.app{display:flex;flex-direction:column;height:100%}
+
+/* HEADER */
+.hdr{background:linear-gradient(90deg,var(--navy),#1a1a3e);padding:7px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:3px solid var(--red);flex-shrink:0;gap:8px;flex-wrap:wrap}
+.hdr-l{display:flex;align-items:center;gap:8px}
+.htitle{font-size:16px;font-weight:900;letter-spacing:1.5px;text-transform:uppercase;white-space:nowrap}
+.htitle em{color:var(--red);font-style:normal}
+.team-selector{display:flex;align-items:center;gap:6px}
+.team-btn{display:flex;align-items:center;gap:5px;padding:4px 10px;border-radius:5px;border:1.5px solid var(--border);background:rgba(255,255,255,.06);cursor:pointer;font-family:inherit;font-size:13px;font-weight:700;color:#fff;transition:.12s;min-width:140px}
+.team-btn:hover{border-color:var(--accent);background:rgba(79,195,247,.08)}
+.team-btn .flag-em{font-size:18px;line-height:1}
+.team-btn .tname{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:110px}
+.team-btn .tcolor{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.vs-badge{font-size:12px;font-weight:900;color:var(--muted);letter-spacing:1px}
+.hdr-r{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.xbtn{font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase;padding:5px 10px;border-radius:4px;border:none;background:var(--red);color:#fff;cursor:pointer;white-space:nowrap}
+.xbtn:hover{background:#c0392b}
+.clr-btn{font-size:11px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;padding:5px 10px;border-radius:4px;border:1px solid rgba(255,255,255,.2);background:transparent;color:var(--muted);cursor:pointer;white-space:nowrap}
+.clr-btn:hover{background:rgba(255,255,255,.07);color:#fff}
+
+/* BODY */
+.body{display:flex;flex:1;overflow:hidden}
+
+/* PANELS */
+.panel{width:145px;flex-shrink:0;overflow-y:auto;padding:4px;display:flex;flex-direction:column;gap:1px}
+.panel-home{background:#0a0d14;border-right:1px solid var(--border)}
+.panel-away{background:#100a14;border-left:1px solid var(--border)}
+.psec{font-size:9px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);padding:5px 4px 2px;border-bottom:1px solid var(--border);margin-bottom:1px}
+.prow{display:flex;align-items:center;gap:5px;padding:5px 5px;border-radius:4px;cursor:pointer;transition:.1s;position:relative;user-select:none}
+.prow:hover{background:rgba(255,255,255,.07)}
+.prow.on{opacity:.3;pointer-events:none}
+.prow.on::after{content:'✓';position:absolute;right:4px;font-size:10px;font-weight:900;color:var(--gold)}
+.prow-no{font-size:14px;font-weight:900;min-width:20px;text-align:center}
+.prow-name{font-size:11px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2}
+.prow-pos{display:inline-block;font-size:8px;font-weight:800;padding:1px 3px;border-radius:2px;margin-top:1px}
+.prow-pos.GK{background:#e67e22;color:#fff}
+.prow-pos.DEF{background:#2471a3;color:#fff}
+.prow-pos.MID{background:#1e8449;color:#fff}
+.prow-pos.FWD{background:#c0392b;color:#fff}
+
+/* PITCH */
+.pitch-wrap{flex:1;position:relative;overflow:hidden}
+#cv{display:block;width:100%;height:100%}
+
+/* TOOLBAR */
+.toolbar{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:3px;background:rgba(8,8,22,.92);border:1px solid rgba(255,255,255,.15);border-radius:10px;padding:5px 7px;z-index:50;user-select:none;box-shadow:0 4px 20px rgba(0,0,0,.5)}
+.tb-sep{width:1px;height:26px;background:rgba(255,255,255,.12);margin:0 3px}
+.tb-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;width:36px;height:36px;border-radius:6px;border:none;background:transparent;color:#ccd;cursor:pointer;transition:.12s;font-family:inherit}
+.tb-btn:hover{background:rgba(255,255,255,.1);color:#fff}
+.tb-btn.active{background:rgba(79,195,247,.18);color:var(--accent);border:1px solid rgba(79,195,247,.4)}
+.tb-btn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.tb-lbl{font-size:7px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;opacity:.7;line-height:1}
+.swatch{width:20px;height:20px;border-radius:50%;cursor:pointer;border:2px solid transparent;flex-shrink:0;transition:.12s}
+.swatch.active{border-color:#fff;transform:scale(1.15)}
+.tb-sm{font-size:9px;font-weight:800;padding:4px 7px;border-radius:4px;border:1px solid rgba(255,255,255,.15);background:transparent;color:var(--muted);cursor:pointer;letter-spacing:.5px;text-transform:uppercase;white-space:nowrap}
+.tb-sm:hover{background:rgba(255,255,255,.08);color:#fff}
+.tb-sm.danger:hover{background:rgba(178,34,52,.3);border-color:var(--red);color:var(--red)}
+
+/* TEAM PICKER MODAL */
+.tpicker{position:fixed;z-index:999;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center}
+.tpicker-box{background:#12121e;border:1.5px solid var(--accent);border-radius:12px;width:680px;max-width:96vw;max-height:82vh;display:flex;flex-direction:column;overflow:hidden}
+.tpicker-hdr{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.tpicker-title{font-size:15px;font-weight:800;letter-spacing:1px;text-transform:uppercase}
+.tpicker-srch{padding:8px 12px;border-bottom:1px solid var(--border);flex-shrink:0}
+.tpicker-srch input{width:100%;padding:6px 10px;background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:5px;color:#fff;font-size:12px;outline:none;font-family:inherit}
+.tpicker-srch input:focus{border-color:var(--accent)}
+.tpicker-body{overflow-y:auto;padding:10px 12px}
+.conf-label{font-size:9px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--muted);padding:6px 0 4px;border-bottom:1px solid var(--border);margin-bottom:6px}
+.conf-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:5px;margin-bottom:10px}
+.team-card{display:flex;align-items:center;gap:7px;padding:7px 9px;border-radius:6px;border:1px solid var(--border);background:rgba(255,255,255,.03);cursor:pointer;transition:.12s}
+.team-card:hover{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.25)}
+.tc-flag{font-size:20px;line-height:1;flex-shrink:0}
+.tc-name{font-size:11px;font-weight:700;line-height:1.2}
+.tc-grp{font-size:9px;color:var(--muted);font-weight:600}
+
+/* ROLE MODAL */
+.mo{position:fixed;z-index:999;inset:0;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center}
+::-webkit-scrollbar{width:3px}::-webkit-scrollbar-thumb{background:rgba(255,255,255,.15);border-radius:2px}
+</style>
+</head>
+<body>
+<div class="app">
+<div class="hdr">
+  <div class="hdr-l">
+    <div style="width:28px;height:19px;position:relative;border-radius:2px;overflow:hidden;border:1px solid rgba(255,255,255,.3);flex-shrink:0">
+      <div style="height:6.3px;width:100%;background:#B22234"></div><div style="height:6.3px;width:100%;background:#fff"></div><div style="height:6.3px;width:100%;background:#B22234"></div>
+      <div style="position:absolute;top:0;left:0;width:38%;height:66%;background:#3C3B6E"></div>
+    </div>
+    <div class="htitle"><em>2026</em> FIFA World Cup Tactical Board</div>
+  </div>
+  <div class="team-selector">
+    <button class="team-btn" id="btn-home">
+      <span class="flag-em" id="home-flag">🇺🇸</span>
+      <span class="tname" id="home-name">USA</span>
+    </button>
+    <span class="vs-badge">VS</span>
+    <button class="team-btn" id="btn-away">
+      <span class="flag-em" id="away-flag">🌍</span>
+      <span class="tname" id="away-name">Select Team</span>
+    </button>
+  </div>
+  <div class="hdr-r">
+    <button class="clr-btn" id="btn-clear-all">Clear All</button>
+    <button class="xbtn" id="xbtn">⬇ Export PNG</button>
+  </div>
+</div>
+
+<div class="body">
+  <div class="panel panel-home" id="pl"></div>
+  <div class="pitch-wrap"><canvas id="cv"></canvas>
+    <div class="toolbar" id="toolbar">
+      <div style="display:flex;gap:2px">
+        <button class="tb-btn active" id="tool-select"><svg viewBox="0 0 24 24"><path d="M5 3l14 9-7 2-3 7z"/></svg><span class="tb-lbl">Move</span></button>
+      </div>
+      <div class="tb-sep"></div>
+      <div style="display:flex;gap:2px">
+        <button class="tb-btn" id="tool-arrow"><svg viewBox="0 0 24 24"><line x1="5" y1="19" x2="19" y2="5"/><polyline points="10,5 19,5 19,14"/></svg><span class="tb-lbl">Arrow</span></button>
+        <button class="tb-btn" id="tool-darrow"><svg viewBox="0 0 24 24" stroke-dasharray="4 2.5"><line x1="5" y1="19" x2="18" y2="6"/><polyline points="10,6 18,6 18,14" stroke-dasharray="0"/></svg><span class="tb-lbl">Dash</span></button>
+        <button class="tb-btn" id="tool-curve"><svg viewBox="0 0 24 24"><path d="M4 20 Q12 4 20 12"/><polyline points="15,8 20,12 16,17"/></svg><span class="tb-lbl">Curve</span></button>
+        <button class="tb-btn" id="tool-line"><svg viewBox="0 0 24 24"><line x1="4" y1="20" x2="20" y2="4"/></svg><span class="tb-lbl">Line</span></button>
+        <button class="tb-btn" id="tool-circle"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/></svg><span class="tb-lbl">Zone</span></button>
+        <button class="tb-btn" id="tool-freehand"><svg viewBox="0 0 24 24"><path d="M4 20 Q6 14 10 13 Q14 12 16 8 Q18 4 20 4"/></svg><span class="tb-lbl">Pen</span></button>
+      </div>
+      <div class="tb-sep"></div>
+      <div style="display:flex;gap:5px;align-items:center" id="color-group">
+        <div class="swatch active" data-color="#ffffff" style="background:#fff"></div>
+        <div class="swatch" data-color="#f0c040" style="background:#f0c040"></div>
+        <div class="swatch" data-color="#4fc3f7" style="background:#4fc3f7"></div>
+        <div class="swatch" data-color="#ef5350" style="background:#ef5350"></div>
+        <div class="swatch" data-color="#66bb6a" style="background:#66bb6a"></div>
+        <div class="swatch" data-color="#ff9800" style="background:#ff9800"></div>
+      </div>
+      <div class="tb-sep"></div>
+      <div style="display:flex;gap:3px;align-items:center">
+        <button class="tb-btn active" data-w="2" style="width:28px;height:28px"><svg viewBox="0 0 18 18"><line x1="2" y1="9" x2="16" y2="9" stroke-width="1.5"/></svg></button>
+        <button class="tb-btn" data-w="4" style="width:28px;height:28px"><svg viewBox="0 0 18 18"><line x1="2" y1="9" x2="16" y2="9" stroke-width="3"/></svg></button>
+        <button class="tb-btn" data-w="7" style="width:28px;height:28px"><svg viewBox="0 0 18 18"><line x1="2" y1="9" x2="16" y2="9" stroke-width="5.5"/></svg></button>
+      </div>
+      <div class="tb-sep"></div>
+      <div style="display:flex;gap:3px">
+        <button class="tb-sm" id="btn-undo">↩ Undo</button>
+        <button class="tb-sm danger" id="btn-clear-draw">Clear Art</button>
+      </div>
+    </div>
+  </div>
+  <div class="panel panel-away" id="pr"></div>
+</div>
+</div>
+<div id="tpicker" class="tpicker" style="display:none"></div>
+<div id="mo" class="mo" style="display:none"></div>
+
+<script>
+// ═══════════════════════════════════════════════════
+// ALL 48 TEAMS — 2026 FIFA WORLD CUP
+// ═══════════════════════════════════════════════════
+const TEAMS = {
+// ── GROUP A ──
+"Mexico":{flag:"🇲🇽",color:"#006847",group:"A",conf:"CONCACAF",players:[
+  {no:1,s:"Ochoa",pos:"GK"},{no:13,s:"Cota",pos:"GK"},{no:23,s:"Talavera",pos:"GK"},
+  {no:2,s:"Sánchez",pos:"DEF"},{no:3,s:"Moreno",pos:"DEF"},{no:4,s:"Vázquez",pos:"DEF"},{no:5,s:"Montes",pos:"DEF"},{no:6,s:"Gallardo",pos:"DEF"},{no:19,s:"Alvarado",pos:"DEF"},
+  {no:7,s:"Herrera",pos:"MID"},{no:8,s:"Álvarez E.",pos:"MID"},{no:10,s:"Lozano",pos:"MID"},{no:14,s:"Guardado",pos:"MID"},{no:16,s:"Rodríguez",pos:"MID"},{no:18,s:"Alvarez J.",pos:"MID"},
+  {no:9,s:"Jiménez",pos:"FWD"},{no:11,s:"Vega",pos:"FWD"},{no:15,s:"Giménez",pos:"FWD"},{no:17,s:"Quiñones",pos:"FWD"},{no:20,s:"Huerta",pos:"FWD"},{no:22,s:"Berterame",pos:"FWD"}
+]},
+"South Africa":{flag:"🇿🇦",color:"#007A4D",group:"A",conf:"CAF",players:[
+  {no:1,s:"Williams",pos:"GK"},{no:13,s:"Petersen",pos:"GK"},{no:23,s:"Hlatshwayo",pos:"GK"},
+  {no:2,s:"Mudau",pos:"DEF"},{no:3,s:"Modiba",pos:"DEF"},{no:4,s:"Ndamane",pos:"DEF"},{no:5,s:"Sibisi",pos:"DEF"},{no:6,s:"Kabini",pos:"DEF"},{no:15,s:"Cross",pos:"DEF"},
+  {no:7,s:"Appollis",pos:"MID"},{no:8,s:"Mokoena",pos:"MID"},{no:10,s:"Zwane",pos:"MID"},{no:11,s:"Mofokeng",pos:"MID"},{no:14,s:"Adams J.",pos:"MID"},{no:16,s:"Mbatha",pos:"MID"},
+  {no:9,s:"Makgopa",pos:"FWD"},{no:17,s:"Foster",pos:"FWD"},{no:18,s:"Rayners",pos:"FWD"},{no:19,s:"Maseko",pos:"FWD"}
+]},
+"South Korea":{flag:"🇰🇷",color:"#C60C30",group:"A",conf:"AFC",players:[
+  {no:1,s:"Kim S.G.",pos:"GK"},{no:21,s:"Jo H.Y.",pos:"GK"},{no:23,s:"Kim J.H.",pos:"GK"},
+  {no:2,s:"Kim M.H.",pos:"DEF"},{no:3,s:"Kang S.H.",pos:"DEF"},{no:4,s:"Kim Y.G.",pos:"DEF"},{no:5,s:"Park S.H.",pos:"DEF"},{no:20,s:"Lee G.Y.",pos:"DEF"},
+  {no:6,s:"Park B.K.",pos:"MID"},{no:7,s:"Hwang H.",pos:"MID"},{no:8,s:"Lee G.S.",pos:"MID"},{no:10,s:"Lee J.H.",pos:"MID"},{no:16,s:"Lee K.M.",pos:"MID"},{no:17,s:"Son H.M.",pos:"MID"},
+  {no:9,s:"Cho G.S.",pos:"FWD"},{no:11,s:"Hwang U.J.",pos:"FWD"},{no:13,s:"Oh S.H.",pos:"FWD"}
+]},
+"Czechia":{flag:"🇨🇿",color:"#D7141A",group:"A",conf:"UEFA",players:[
+  {no:1,s:"Kovář",pos:"GK"},{no:23,s:"Staněk",pos:"GK"},{no:12,s:"Mandous",pos:"GK"},
+  {no:2,s:"Coufal",pos:"DEF"},{no:3,s:"Zelený",pos:"DEF"},{no:4,s:"Brabec",pos:"DEF"},{no:5,s:"Vitík",pos:"DEF"},{no:6,s:"Holeš",pos:"DEF"},
+  {no:7,s:"Souček",pos:"MID"},{no:8,s:"Sadílek",pos:"MID"},{no:10,s:"Barak",pos:"MID"},{no:11,s:"Lingr",pos:"MID"},{no:14,s:"Samek",pos:"MID"},
+  {no:9,s:"Kuchta",pos:"FWD"},{no:13,s:"Chytil",pos:"FWD"},{no:17,s:"Schick",pos:"FWD"},{no:18,s:"Matějů",pos:"FWD"}
+]},
+// ── GROUP B ──
+"Canada":{flag:"🇨🇦",color:"#FF0000",group:"B",conf:"CONCACAF",players:[
+  {no:1,s:"St. Clair",pos:"GK"},{no:18,s:"Crepeau",pos:"GK"},{no:23,s:"James",pos:"GK"},
+  {no:2,s:"Johnston",pos:"DEF"},{no:3,s:"Buchanan",pos:"DEF"},{no:4,s:"Vitória",pos:"DEF"},{no:5,s:"Miller",pos:"DEF"},{no:6,s:"Adekugbe",pos:"DEF"},{no:12,s:"Waterman",pos:"DEF"},
+  {no:7,s:"Eustaquio",pos:"MID"},{no:8,s:"Osorio",pos:"MID"},{no:10,s:"David",pos:"MID"},{no:14,s:"Larin",pos:"MID"},{no:16,s:"Hutchinson",pos:"MID"},
+  {no:9,s:"Hoilett",pos:"FWD"},{no:11,s:"Davies",pos:"FWD"},{no:13,s:"Cavallini",pos:"FWD"},{no:17,s:"Cornelius",pos:"FWD"}
+]},
+"Switzerland":{flag:"🇨🇭",color:"#FF0000",group:"B",conf:"UEFA",players:[
+  {no:1,s:"Kobel",pos:"GK"},{no:12,s:"Keller",pos:"GK"},{no:21,s:"Mvogo",pos:"GK"},
+  {no:2,s:"Widmer",pos:"DEF"},{no:3,s:"Rodriguez",pos:"DEF"},{no:4,s:"Akanji",pos:"DEF"},{no:5,s:"Elvedi",pos:"DEF"},{no:6,s:"Amdouni",pos:"DEF"},{no:22,s:"Amenda",pos:"DEF"},
+  {no:8,s:"Freuler",pos:"MID"},{no:10,s:"Xhaka",pos:"MID"},{no:11,s:"Sow",pos:"MID"},{no:14,s:"Jashari",pos:"MID"},{no:17,s:"Rieder",pos:"MID"},
+  {no:7,s:"Embolo",pos:"FWD"},{no:9,s:"Okafor",pos:"FWD"},{no:13,s:"Ndoye",pos:"FWD"},{no:18,s:"Itten",pos:"FWD"}
+]},
+"Qatar":{flag:"🇶🇦",color:"#8D1B3D",group:"B",conf:"AFC",players:[
+  {no:1,s:"Al Sheeb",pos:"GK"},{no:21,s:"Barsham",pos:"GK"},{no:13,s:"Hassan",pos:"GK"},
+  {no:2,s:"Pedro Miguel",pos:"DEF"},{no:3,s:"Al Rawi",pos:"DEF"},{no:5,s:"Salman",pos:"DEF"},{no:6,s:"Tariq",pos:"DEF"},{no:21,s:"Hassan",pos:"DEF"},
+  {no:7,s:"Assim",pos:"MID"},{no:8,s:"Al Haydos",pos:"MID"},{no:10,s:"Al Haydos",pos:"MID"},{no:14,s:"Al Naimi",pos:"MID"},{no:15,s:"Boudiaf",pos:"MID"},
+  {no:9,s:"Ali",pos:"FWD"},{no:11,s:"Afif",pos:"FWD"},{no:17,s:"Al-Moez",pos:"FWD"}
+]},
+"Bosnia & Herz.":{flag:"🇧🇦",color:"#002395",group:"B",conf:"UEFA",players:[
+  {no:1,s:"Vasilj",pos:"GK"},{no:12,s:"Zlomislic",pos:"GK"},{no:23,s:"Hadzikadic",pos:"GK"},
+  {no:2,s:"Dedic",pos:"DEF"},{no:3,s:"Kolasinac",pos:"DEF"},{no:4,s:"Katic",pos:"DEF"},{no:5,s:"Muharemovic",pos:"DEF"},{no:6,s:"Hadzikadunic",pos:"DEF"},{no:15,s:"Mujakic",pos:"DEF"},
+  {no:7,s:"Burnic",pos:"MID"},{no:8,s:"Sunjic",pos:"MID"},{no:10,s:"Tahirovic",pos:"MID"},{no:14,s:"Hadziahmetovic",pos:"MID"},{no:16,s:"Basic",pos:"MID"},
+  {no:9,s:"Demirovic",pos:"FWD"},{no:11,s:"Dzeko",pos:"FWD"},{no:13,s:"Tabakovic",pos:"FWD"},{no:17,s:"Bazdar",pos:"FWD"}
+]},
+// ── GROUP C ──
+"Brazil":{flag:"🇧🇷",color:"#009C3B",group:"C",conf:"CONMEBOL",players:[
+  {no:1,s:"Ederson",pos:"GK"},{no:12,s:"Alisson",pos:"GK"},{no:23,s:"Weverton",pos:"GK"},
+  {no:2,s:"Danilo",pos:"DEF"},{no:3,s:"Bremer",pos:"DEF"},{no:4,s:"Marquinhos",pos:"DEF"},{no:6,s:"Alex Sandro",pos:"DEF"},{no:14,s:"Militão",pos:"DEF"},{no:22,s:"Wesley",pos:"DEF"},
+  {no:5,s:"Casemiro",pos:"MID"},{no:8,s:"Paquetá",pos:"MID"},{no:15,s:"B. Guimarães",pos:"MID"},{no:17,s:"Fabinho",pos:"MID"},{no:18,s:"Danilo S.",pos:"MID"},
+  {no:7,s:"Vini Jr.",pos:"FWD"},{no:9,s:"Endrick",pos:"FWD"},{no:10,s:"Neymar",pos:"FWD"},{no:11,s:"Raphinha",pos:"FWD"},{no:19,s:"Martinelli",pos:"FWD"},{no:20,s:"Cunha",pos:"FWD"}
+]},
+"Morocco":{flag:"🇲🇦",color:"#C1272D",group:"C",conf:"CAF",players:[
+  {no:1,s:"Bounou",pos:"GK"},{no:12,s:"Benoun",pos:"GK"},{no:23,s:"El Kajoui",pos:"GK"},
+  {no:2,s:"Hakimi",pos:"DEF"},{no:3,s:"Mazraoui",pos:"DEF"},{no:4,s:"Aguerd",pos:"DEF"},{no:5,s:"El Yamiq",pos:"DEF"},{no:6,s:"Saiss",pos:"DEF"},{no:22,s:"Attiat-Allah",pos:"DEF"},
+  {no:7,s:"Ounahi",pos:"MID"},{no:8,s:"Amrabat",pos:"MID"},{no:10,s:"Ziyech",pos:"MID"},{no:14,s:"Benhaima",pos:"MID"},{no:16,s:"El Khannouss",pos:"MID"},
+  {no:9,s:"En-Nesyri",pos:"FWD"},{no:11,s:"Boufal",pos:"FWD"},{no:17,s:"Sabiri",pos:"FWD"},{no:19,s:"Ezzalzouli",pos:"FWD"}
+]},
+"Scotland":{flag:"🏴󠁧󠁢󠁳󠁣󠁴󠁿",color:"#003087",group:"C",conf:"UEFA",players:[
+  {no:1,s:"Gordon",pos:"GK"},{no:12,s:"Kelly",pos:"GK"},{no:23,s:"Clark",pos:"GK"},
+  {no:2,s:"Ralston",pos:"DEF"},{no:3,s:"Tierney",pos:"DEF"},{no:4,s:"Hanley",pos:"DEF"},{no:5,s:"Cooper",pos:"DEF"},{no:6,s:"McKenna",pos:"DEF"},{no:21,s:"Taylor",pos:"DEF"},
+  {no:7,s:"McGinn",pos:"MID"},{no:8,s:"McTominay",pos:"MID"},{no:10,s:"Christie",pos:"MID"},{no:14,s:"Gilmour",pos:"MID"},{no:15,s:"Adams S.",pos:"MID"},
+  {no:9,s:"Dykes",pos:"FWD"},{no:11,s:"Shankland",pos:"FWD"},{no:17,s:"Adams T.",pos:"FWD"},{no:19,s:"McLean",pos:"FWD"}
+]},
+"Haiti":{flag:"🇭🇹",color:"#00209F",group:"C",conf:"CONCACAF",players:[
+  {no:1,s:"Placide",pos:"GK"},{no:12,s:"Pierre A.",pos:"GK"},{no:23,s:"Duverger",pos:"GK"},
+  {no:2,s:"Ade",pos:"DEF"},{no:3,s:"Arcus",pos:"DEF"},{no:4,s:"Duverne",pos:"DEF"},{no:5,s:"Lacroix",pos:"DEF"},{no:6,s:"Paugain",pos:"DEF"},{no:16,s:"Delcroix",pos:"DEF"},
+  {no:7,s:"Pierre L.",pos:"MID"},{no:8,s:"Jean Jacques",pos:"MID"},{no:10,s:"Bellegarde",pos:"MID"},{no:14,s:"Simon",pos:"MID"},{no:15,s:"Sainte",pos:"MID"},
+  {no:9,s:"Jean",pos:"FWD"},{no:11,s:"Noel",pos:"FWD"},{no:17,s:"Romain",pos:"FWD"}
+]},
+// ── GROUP D ──
+"USA":{flag:"🇺🇸",color:"#B22234",group:"D",conf:"CONCACAF",players:[
+  {no:1,s:"Turner",pos:"GK"},{no:24,s:"Freese",pos:"GK"},{no:25,s:"Brady",pos:"GK"},
+  {no:2,s:"Dest",pos:"DEF"},{no:3,s:"Richards",pos:"DEF"},{no:5,s:"Robinson A.",pos:"DEF"},{no:6,s:"Trusty",pos:"DEF"},{no:12,s:"M.Robinson",pos:"DEF"},{no:13,s:"Ream",pos:"DEF"},{no:16,s:"Freeman",pos:"DEF"},{no:18,s:"Arfsten",pos:"DEF"},{no:22,s:"McKenzie",pos:"DEF"},{no:23,s:"Scally",pos:"DEF"},
+  {no:4,s:"Adams",pos:"MID"},{no:7,s:"Reyna",pos:"MID"},{no:8,s:"McKennie",pos:"MID"},{no:14,s:"Berhalter",pos:"MID"},{no:15,s:"Roldan",pos:"MID"},{no:17,s:"Tillman",pos:"MID"},
+  {no:9,s:"Pepi",pos:"FWD"},{no:10,s:"Pulisic",pos:"FWD"},{no:11,s:"Aaronson",pos:"FWD"},{no:19,s:"Wright",pos:"FWD"},{no:20,s:"Balogun",pos:"FWD"},{no:21,s:"T.Weah",pos:"FWD"},{no:26,s:"Zendejas",pos:"FWD"}
+]},
+"Paraguay":{flag:"🇵🇾",color:"#D52B1E",group:"D",conf:"CONMEBOL",players:[
+  {no:1,s:"Fernández",pos:"GK"},{no:12,s:"Silva",pos:"GK"},{no:23,s:"Romero",pos:"GK"},
+  {no:2,s:"Alderete",pos:"DEF"},{no:3,s:"Arzamendia",pos:"DEF"},{no:4,s:"Balbuena",pos:"DEF"},{no:5,s:"Alonso",pos:"DEF"},{no:6,s:"Vega",pos:"DEF"},{no:16,s:"Espinola",pos:"DEF"},
+  {no:7,s:"Gómez",pos:"MID"},{no:8,s:"Villasanti",pos:"MID"},{no:10,s:"Almiron",pos:"MID"},{no:14,s:"González",pos:"MID"},{no:17,s:"Sanabria",pos:"MID"},
+  {no:9,s:"Enciso",pos:"FWD"},{no:11,s:"Romero",pos:"FWD"},{no:13,s:"Torres",pos:"FWD"},{no:19,s:"Bareiro",pos:"FWD"}
+]},
+"Australia":{flag:"🇦🇺",color:"#00843D",group:"D",conf:"AFC",players:[
+  {no:1,s:"Ryan",pos:"GK"},{no:12,s:"Vukovic",pos:"GK"},{no:18,s:"Redmayne",pos:"GK"},
+  {no:2,s:"Atkinson",pos:"DEF"},{no:3,s:"Behich",pos:"DEF"},{no:4,s:"Souttar",pos:"DEF"},{no:5,s:"Rowles",pos:"DEF"},{no:6,s:"Wright T.",pos:"DEF"},{no:20,s:"Degenek",pos:"DEF"},
+  {no:7,s:"Devlin",pos:"MID"},{no:8,s:"Mooy",pos:"MID"},{no:10,s:"Hrustic",pos:"MID"},{no:13,s:"Irvine",pos:"MID"},{no:17,s:"Baccus",pos:"MID"},
+  {no:9,s:"Maclaren",pos:"FWD"},{no:11,s:"Duke",pos:"FWD"},{no:14,s:"Goodwin",pos:"FWD"},{no:19,s:"Mabil",pos:"FWD"}
+]},
+"Türkiye":{flag:"🇹🇷",color:"#E30A17",group:"D",conf:"UEFA",players:[
+  {no:1,s:"Günok",pos:"GK"},{no:12,s:"Bayındır",pos:"GK"},{no:23,s:"Çakır",pos:"GK"},
+  {no:2,s:"Müldür",pos:"DEF"},{no:3,s:"Köybasi",pos:"DEF"},{no:4,s:"Bardakçı",pos:"DEF"},{no:5,s:"Demiral",pos:"DEF"},{no:6,s:"Kabak",pos:"DEF"},{no:15,s:"Çelik",pos:"DEF"},
+  {no:7,s:"Karaman",pos:"MID"},{no:8,s:"Özcan",pos:"MID"},{no:10,s:"Çalhanoğlu",pos:"MID"},{no:14,s:"Yüksek",pos:"MID"},{no:16,s:"Güler",pos:"MID"},
+  {no:9,s:"Yilmaz",pos:"FWD"},{no:11,s:"Aktürkoğlu",pos:"FWD"},{no:17,s:"Kökcü",pos:"FWD"},{no:19,s:"Ayhan",pos:"FWD"}
+]},
+// ── GROUP E ──
+"Germany":{flag:"🇩🇪",color:"#000000",group:"E",conf:"UEFA",players:[
+  {no:1,s:"Neuer",pos:"GK"},{no:12,s:"Ter Stegen",pos:"GK"},{no:23,s:"Trapp",pos:"GK"},
+  {no:2,s:"Kimmich",pos:"DEF"},{no:3,s:"Rüdiger",pos:"DEF"},{no:4,s:"Süle",pos:"DEF"},{no:5,s:"Schlotterbeck",pos:"DEF"},{no:6,s:"Raum",pos:"DEF"},{no:21,s:"Henrichs",pos:"DEF"},
+  {no:7,s:"Havertz",pos:"MID"},{no:8,s:"Kroos",pos:"MID"},{no:10,s:"Müller",pos:"MID"},{no:14,s:"Goretzka",pos:"MID"},{no:18,s:"Musiala",pos:"MID"},
+  {no:9,s:"Füllkrug",pos:"FWD"},{no:11,s:"Gnabry",pos:"FWD"},{no:13,s:"Sané",pos:"FWD"},{no:17,s:"Wirtz",pos:"FWD"},{no:25,s:"Undav",pos:"FWD"}
+]},
+"Curaçao":{flag:"🇨🇼",color:"#003DA5",group:"E",conf:"CONCACAF",players:[
+  {no:1,s:"Omeyer",pos:"GK"},{no:12,s:"Conijn",pos:"GK"},{no:23,s:"Bliek",pos:"GK"},
+  {no:2,s:"Rozario",pos:"DEF"},{no:3,s:"Flemming",pos:"DEF"},{no:4,s:"Geertruida",pos:"DEF"},{no:5,s:"van Beukering",pos:"DEF"},{no:6,s:"Tuur",pos:"DEF"},
+  {no:7,s:"van Aanholt",pos:"MID"},{no:8,s:"Dos Santos",pos:"MID"},{no:10,s:"Berbig",pos:"MID"},{no:14,s:"Leemans",pos:"MID"},{no:16,s:"Jusufi",pos:"MID"},
+  {no:9,s:"Berghuis",pos:"FWD"},{no:11,s:"Sno",pos:"FWD"},{no:17,s:"Daal",pos:"FWD"}
+]},
+"Ivory Coast":{flag:"🇨🇮",color:"#F77F00",group:"E",conf:"CAF",players:[
+  {no:1,s:"Sangaré",pos:"GK"},{no:12,s:"Gboho",pos:"GK"},{no:23,s:"Deli",pos:"GK"},
+  {no:2,s:"Aurier",pos:"DEF"},{no:3,s:"Boly",pos:"DEF"},{no:4,s:"Coulibaly",pos:"DEF"},{no:5,s:"Bailly",pos:"DEF"},{no:6,s:"Diallo",pos:"DEF"},{no:13,s:"Kouyaté",pos:"DEF"},
+  {no:7,s:"Pepe",pos:"MID"},{no:8,s:"Zaha",pos:"MID"},{no:10,s:"Gradel",pos:"MID"},{no:11,s:"Kessié",pos:"MID"},{no:14,s:"Seri",pos:"MID"},
+  {no:9,s:"Haller",pos:"FWD"},{no:15,s:"Dembélé",pos:"FWD"},{no:17,s:"Cornet",pos:"FWD"},{no:19,s:"Dao",pos:"FWD"}
+]},
+"Ecuador":{flag:"🇪🇨",color:"#FFD100",group:"E",conf:"CONMEBOL",players:[
+  {no:1,s:"Galíndez",pos:"GK"},{no:12,s:"Domínguez",pos:"GK"},{no:23,s:"Ramírez",pos:"GK"},
+  {no:2,s:"Preciado",pos:"DEF"},{no:3,s:"Estupiñán",pos:"DEF"},{no:4,s:"Torres",pos:"DEF"},{no:5,s:"Hincapié",pos:"DEF"},{no:6,s:"Arboleda",pos:"DEF"},{no:17,s:"Pacho",pos:"DEF"},
+  {no:7,s:"Gruezo",pos:"MID"},{no:8,s:"Cifuentes",pos:"MID"},{no:10,s:"Caicedo",pos:"MID"},{no:14,s:"Sarmiento",pos:"MID"},{no:16,s:"Méndez",pos:"MID"},
+  {no:9,s:"Valencia",pos:"FWD"},{no:11,s:"Plata",pos:"FWD"},{no:13,s:"Mena",pos:"FWD"},{no:19,s:"Ibarra",pos:"FWD"}
+]},
+// ── GROUP F ──
+"Netherlands":{flag:"🇳🇱",color:"#FF6600",group:"F",conf:"UEFA",players:[
+  {no:1,s:"Flekken",pos:"GK"},{no:13,s:"Verbruggen",pos:"GK"},{no:22,s:"Roefs",pos:"GK"},
+  {no:2,s:"Dumfries",pos:"DEF"},{no:3,s:"Blind",pos:"DEF"},{no:4,s:"van Dijk",pos:"DEF"},{no:5,s:"Timber",pos:"DEF"},{no:6,s:"Aké",pos:"DEF"},{no:15,s:"Hato",pos:"DEF"},
+  {no:7,s:"Simons",pos:"MID"},{no:8,s:"Schouten",pos:"MID"},{no:10,s:"de Jong",pos:"MID"},{no:14,s:"Koopmeiners",pos:"MID"},{no:16,s:"Veerman",pos:"MID"},
+  {no:9,s:"Weghorst",pos:"FWD"},{no:11,s:"Gakpo",pos:"FWD"},{no:17,s:"Malen",pos:"FWD"},{no:19,s:"Bergwijn",pos:"FWD"}
+]},
+"Japan":{flag:"🇯🇵",color:"#003DA5",group:"F",conf:"AFC",players:[
+  {no:1,s:"Gonda",pos:"GK"},{no:12,s:"Kawashima",pos:"GK"},{no:23,s:"Nakamura",pos:"GK"},
+  {no:2,s:"Sakai",pos:"DEF"},{no:3,s:"Nagatomo",pos:"DEF"},{no:4,s:"Itakura",pos:"DEF"},{no:5,s:"Yoshida",pos:"DEF"},{no:6,s:"Tomiyasu",pos:"DEF"},{no:22,s:"Tanaka",pos:"DEF"},
+  {no:7,s:"Doan",pos:"MID"},{no:8,s:"Endo",pos:"MID"},{no:10,s:"Kubo",pos:"MID"},{no:14,s:"Mitoma",pos:"MID"},{no:16,s:"Kamada",pos:"MID"},
+  {no:9,s:"Minamino",pos:"FWD"},{no:11,s:"Furuhashi",pos:"FWD"},{no:13,s:"Ueda",pos:"FWD"},{no:15,s:"Iwata",pos:"FWD"}
+]},
+"Sweden":{flag:"🇸🇪",color:"#006AA7",group:"F",conf:"UEFA",players:[
+  {no:1,s:"Olsen",pos:"GK"},{no:12,s:"Johnsson",pos:"GK"},{no:23,s:"Dahlberg",pos:"GK"},
+  {no:2,s:"Krafth",pos:"DEF"},{no:3,s:"Augustinsson",pos:"DEF"},{no:4,s:"Lindelöf",pos:"DEF"},{no:5,s:"Danielson",pos:"DEF"},{no:6,s:"Nilsson",pos:"DEF"},{no:15,s:"Lustig",pos:"DEF"},
+  {no:7,s:"Svensson",pos:"MID"},{no:8,s:"Olsson",pos:"MID"},{no:10,s:"Forsberg",pos:"MID"},{no:14,s:"Ekdal",pos:"MID"},{no:16,s:"Claesson",pos:"MID"},
+  {no:9,s:"Berg",pos:"FWD"},{no:11,s:"Gyökeres",pos:"FWD"},{no:13,s:"Quaison",pos:"FWD"},{no:17,s:"Isak",pos:"FWD"}
+]},
+"Tunisia":{flag:"🇹🇳",color:"#E70013",group:"F",conf:"CAF",players:[
+  {no:1,s:"Dahmen",pos:"GK"},{no:16,s:"Mathlouthi",pos:"GK"},{no:23,s:"Hassen",pos:"GK"},
+  {no:2,s:"Bronn",pos:"DEF"},{no:3,s:"Abdou",pos:"DEF"},{no:4,s:"Talbi",pos:"DEF"},{no:5,s:"Meriah",pos:"DEF"},{no:6,s:"Ben Hmida",pos:"DEF"},{no:17,s:"Ifa",pos:"DEF"},
+  {no:7,s:"Laidouni",pos:"MID"},{no:8,s:"Ben Slimane",pos:"MID"},{no:10,s:"Msakni",pos:"MID"},{no:14,s:"Chaalali",pos:"MID"},{no:15,s:"Abdi",pos:"MID"},
+  {no:9,s:"Jebali",pos:"FWD"},{no:11,s:"Slimane",pos:"FWD"},{no:13,s:"Drager",pos:"FWD"}
+]},
+// ── GROUP G ──
+"Belgium":{flag:"🇧🇪",color:"#EF3340",group:"G",conf:"UEFA",players:[
+  {no:1,s:"Casteels",pos:"GK"},{no:12,s:"Mignolet",pos:"GK"},{no:23,s:"Bodart",pos:"GK"},
+  {no:2,s:"Castagne",pos:"DEF"},{no:3,s:"Vertonghen",pos:"DEF"},{no:4,s:"Alderweireld",pos:"DEF"},{no:5,s:"Faes",pos:"DEF"},{no:6,s:"Theate",pos:"DEF"},{no:16,s:"De Cuyper",pos:"DEF"},
+  {no:7,s:"De Bruyne",pos:"MID"},{no:8,s:"Tielemans",pos:"MID"},{no:10,s:"Mertens",pos:"MID"},{no:14,s:"Onana",pos:"MID"},{no:17,s:"Witsel",pos:"MID"},
+  {no:9,s:"Lukaku",pos:"FWD"},{no:11,s:"Hazard",pos:"FWD"},{no:13,s:"Openda",pos:"FWD"},{no:18,s:"Doku",pos:"FWD"}
+]},
+"Egypt":{flag:"🇪🇬",color:"#C8102E",group:"G",conf:"CAF",players:[
+  {no:1,s:"El Shenawy",pos:"GK"},{no:12,s:"Gabaski",pos:"GK"},{no:23,s:"El Hadary",pos:"GK"},
+  {no:2,s:"Ashraf",pos:"DEF"},{no:3,s:"Kamal",pos:"DEF"},{no:4,s:"Hegazi",pos:"DEF"},{no:5,s:"El Neny",pos:"DEF"},{no:6,s:"Hamdy",pos:"DEF"},{no:17,s:"Fathy",pos:"DEF"},
+  {no:7,s:"Elneny",pos:"MID"},{no:8,s:"Hamed",pos:"MID"},{no:10,s:"Salah",pos:"MID"},{no:14,s:"Trezeguet",pos:"MID"},{no:15,s:"Warda",pos:"MID"},
+  {no:9,s:"Marmoush",pos:"FWD"},{no:11,s:"Mostafa",pos:"FWD"},{no:13,s:"Zizo",pos:"FWD"}
+]},
+"Iran":{flag:"🇮🇷",color:"#239F40",group:"G",conf:"AFC",players:[
+  {no:1,s:"Beiranvand",pos:"GK"},{no:12,s:"Hosseini",pos:"GK"},{no:23,s:"Abedzadeh",pos:"GK"},
+  {no:2,s:"Pouraliganji",pos:"DEF"},{no:3,s:"Mohammadi",pos:"DEF"},{no:4,s:"Kanaanizadegan",pos:"DEF"},{no:5,s:"Cheshmi",pos:"DEF"},{no:6,s:"Rezaeian",pos:"DEF"},{no:19,s:"Jalali",pos:"DEF"},
+  {no:7,s:"Jahanbakhsh",pos:"MID"},{no:8,s:"Amiri",pos:"MID"},{no:10,s:"Taremi",pos:"MID"},{no:14,s:"Ezatolahi",pos:"MID"},{no:17,s:"Noorafkan",pos:"MID"},
+  {no:9,s:"Azmoun",pos:"FWD"},{no:11,s:"Ghoddos",pos:"FWD"},{no:13,s:"Karimi",pos:"FWD"}
+]},
+"New Zealand":{flag:"🇳🇿",color:"#000000",group:"G",conf:"OFC",players:[
+  {no:1,s:"Old",pos:"GK"},{no:12,s:"Just",pos:"GK"},{no:23,s:"Singh",pos:"GK"},
+  {no:2,s:"Bell",pos:"DEF"},{no:3,s:"Waitere",pos:"DEF"},{no:4,s:"Cornelius B.",pos:"DEF"},{no:5,s:"Ngan-Woo",pos:"DEF"},{no:6,s:"McGlinchey",pos:"DEF"},
+  {no:7,s:"Rojas",pos:"MID"},{no:8,s:"Cacace",pos:"MID"},{no:10,s:"McCowatt",pos:"MID"},{no:14,s:"Thomas",pos:"MID"},{no:16,s:"Woud",pos:"MID"},
+  {no:9,s:"Payne",pos:"FWD"},{no:11,s:"Wood",pos:"FWD"},{no:13,s:"Smeltz",pos:"FWD"}
+]},
+// ── GROUP H ──
+"Spain":{flag:"🇪🇸",color:"#AA151B",group:"H",conf:"UEFA",players:[
+  {no:1,s:"Unai Simón",pos:"GK"},{no:12,s:"Raya",pos:"GK"},{no:23,s:"Remiro",pos:"GK"},
+  {no:2,s:"Carvajal",pos:"DEF"},{no:3,s:"Alba",pos:"DEF"},{no:4,s:"Le Normand",pos:"DEF"},{no:5,s:"Laporte",pos:"DEF"},{no:6,s:"Nacho",pos:"DEF"},{no:22,s:"Cucurella",pos:"DEF"},
+  {no:7,s:"Morata",pos:"MID"},{no:8,s:"Pedri",pos:"MID"},{no:10,s:"Dani Olmo",pos:"MID"},{no:14,s:"Zubimendi",pos:"MID"},{no:16,s:"Rodri",pos:"MID"},
+  {no:9,s:"Ferran",pos:"FWD"},{no:11,s:"Yamal",pos:"FWD"},{no:17,s:"Nico Williams",pos:"FWD"},{no:19,s:"Oyarzabal",pos:"FWD"}
+]},
+"Uruguay":{flag:"🇺🇾",color:"#75AADB",group:"H",conf:"CONMEBOL",players:[
+  {no:1,s:"Muslera",pos:"GK"},{no:12,s:"Rochet",pos:"GK"},{no:23,s:"Sosa",pos:"GK"},
+  {no:2,s:"Vina",pos:"DEF"},{no:3,s:"Olivera",pos:"DEF"},{no:4,s:"Gimenez J.",pos:"DEF"},{no:5,s:"Godin",pos:"DEF"},{no:6,s:"Araujo",pos:"DEF"},{no:16,s:"Coates",pos:"DEF"},
+  {no:7,s:"De la Cruz",pos:"MID"},{no:8,s:"Vecino",pos:"MID"},{no:10,s:"Valverde",pos:"MID"},{no:14,s:"Bentancur",pos:"MID"},{no:17,s:"Ugarte",pos:"MID"},
+  {no:9,s:"Darwin",pos:"FWD"},{no:11,s:"Cavani",pos:"FWD"},{no:13,s:"Gomez",pos:"FWD"},{no:19,s:"Pellistri",pos:"FWD"}
+]},
+"Saudi Arabia":{flag:"🇸🇦",color:"#006C35",group:"H",conf:"AFC",players:[
+  {no:1,s:"Al Owais",pos:"GK"},{no:12,s:"Al Muaiouf",pos:"GK"},{no:23,s:"Al Yami",pos:"GK"},
+  {no:2,s:"Al Shahrani",pos:"DEF"},{no:3,s:"Al Bulayhi",pos:"DEF"},{no:4,s:"Al Amri",pos:"DEF"},{no:5,s:"Al Tambakti",pos:"DEF"},{no:6,s:"Al Ghanam",pos:"DEF"},
+  {no:7,s:"Al Dawsari",pos:"MID"},{no:8,s:"Salman",pos:"MID"},{no:10,s:"Feras",pos:"MID"},{no:14,s:"Kanno",pos:"MID"},{no:17,s:"Bahbri",pos:"MID"},
+  {no:9,s:"Al Shehri",pos:"FWD"},{no:11,s:"Ghareeb",pos:"FWD"},{no:13,s:"Biyabi",pos:"FWD"}
+]},
+"Cape Verde":{flag:"🇨🇻",color:"#003893",group:"H",conf:"CAF",players:[
+  {no:1,s:"Léo",pos:"GK"},{no:12,s:"Cláudio",pos:"GK"},{no:23,s:"Josimar",pos:"GK"},
+  {no:2,s:"Stopira",pos:"DEF"},{no:3,s:"Roberto",pos:"DEF"},{no:4,s:"Lucio Antunes",pos:"DEF"},{no:5,s:"Cá Manél",pos:"DEF"},{no:6,s:"Fortes",pos:"DEF"},
+  {no:7,s:"Taira",pos:"MID"},{no:8,s:"Garry Rodrigues",pos:"MID"},{no:10,s:"Nuno Borges",pos:"MID"},{no:14,s:"Jovane",pos:"MID"},{no:17,s:"Ryan Mendes",pos:"MID"},
+  {no:9,s:"Ze Luis",pos:"FWD"},{no:11,s:"Djaniny",pos:"FWD"},{no:13,s:"Júlio Tavares",pos:"FWD"}
+]},
+// ── GROUP I ──
+"France":{flag:"🇫🇷",color:"#002395",group:"I",conf:"UEFA",players:[
+  {no:1,s:"Maignan",pos:"GK"},{no:16,s:"Lloris",pos:"GK"},{no:23,s:"Areola",pos:"GK"},
+  {no:2,s:"Pavard",pos:"DEF"},{no:3,s:"Hernández T.",pos:"DEF"},{no:4,s:"Varane",pos:"DEF"},{no:5,s:"Konaté",pos:"DEF"},{no:6,s:"Saliba",pos:"DEF"},{no:22,s:"Upamecano",pos:"DEF"},
+  {no:7,s:"Griezmann",pos:"MID"},{no:8,s:"Tchouaméni",pos:"MID"},{no:10,s:"Mbappé",pos:"MID"},{no:14,s:"Camavinga",pos:"MID"},{no:18,s:"Rabiot",pos:"MID"},
+  {no:9,s:"Giroud",pos:"FWD"},{no:11,s:"Dembélé",pos:"FWD"},{no:13,s:"Thuram",pos:"FWD"},{no:17,s:"Coman",pos:"FWD"},{no:19,s:"Nkunku",pos:"FWD"}
+]},
+"Senegal":{flag:"🇸🇳",color:"#00853F",group:"I",conf:"CAF",players:[
+  {no:1,s:"Mendy E.",pos:"GK"},{no:12,s:"Gomis",pos:"GK"},{no:23,s:"Dieng",pos:"GK"},
+  {no:2,s:"Sarr",pos:"DEF"},{no:3,s:"Mendy F.",pos:"DEF"},{no:4,s:"Koulibaly",pos:"DEF"},{no:5,s:"Cisse",pos:"DEF"},{no:6,s:"Diallo",pos:"DEF"},{no:22,s:"Jakobs",pos:"DEF"},
+  {no:7,s:"Gueye",pos:"MID"},{no:8,s:"Kouyate",pos:"MID"},{no:10,s:"Mané",pos:"MID"},{no:14,s:"Diatta",pos:"MID"},{no:16,s:"Ciss",pos:"MID"},
+  {no:9,s:"Dia",pos:"FWD"},{no:11,s:"Boulaye",pos:"FWD"},{no:13,s:"Jackson",pos:"FWD"},{no:17,s:"Sarr P.",pos:"FWD"}
+]},
+"Norway":{flag:"🇳🇴",color:"#EF2B2D",group:"I",conf:"UEFA",players:[
+  {no:1,s:"Nyland",pos:"GK"},{no:12,s:"Ørjan",pos:"GK"},{no:23,s:"Haikin",pos:"GK"},
+  {no:2,s:"Elabdellaoui",pos:"DEF"},{no:3,s:"Meling",pos:"DEF"},{no:4,s:"Ostigard",pos:"DEF"},{no:5,s:"Ajer",pos:"DEF"},{no:6,s:"Pedersen",pos:"DEF"},{no:17,s:"Ryerson",pos:"DEF"},
+  {no:7,s:"Ødegaard",pos:"MID"},{no:8,s:"Berg M.",pos:"MID"},{no:10,s:"Sörloth",pos:"MID"},{no:14,s:"Thorsby",pos:"MID"},{no:16,s:"Berge",pos:"MID"},
+  {no:9,s:"Haaland",pos:"FWD"},{no:11,s:"Braaut-Olsen",pos:"FWD"},{no:13,s:"King",pos:"FWD"},{no:19,s:"Botheim",pos:"FWD"}
+]},
+"Iraq":{flag:"🇮🇶",color:"#007A3D",group:"I",conf:"AFC",players:[
+  {no:1,s:"Basim",pos:"GK"},{no:12,s:"Al Abbood",pos:"GK"},{no:23,s:"Jabur",pos:"GK"},
+  {no:2,s:"Mohammed",pos:"DEF"},{no:3,s:"Ali Adnan",pos:"DEF"},{no:4,s:"Hamid",pos:"DEF"},{no:5,s:"Abdul",pos:"DEF"},{no:6,s:"Jasim",pos:"DEF"},
+  {no:7,s:"Mohanad",pos:"MID"},{no:8,s:"Ibrahim",pos:"MID"},{no:10,s:"Al Hamdawi",pos:"MID"},{no:14,s:"Karrar",pos:"MID"},{no:17,s:"Amjed",pos:"MID"},
+  {no:9,s:"Al-Hamadi",pos:"FWD"},{no:11,s:"Hussein A.",pos:"FWD"},{no:13,s:"Yasseen",pos:"FWD"}
+]},
+// ── GROUP J ──
+"Argentina":{flag:"🇦🇷",color:"#74ACDF",group:"J",conf:"CONMEBOL",players:[
+  {no:1,s:"Martínez E.",pos:"GK"},{no:12,s:"Rulli",pos:"GK"},{no:23,s:"Armani",pos:"GK"},
+  {no:2,s:"Molina",pos:"DEF"},{no:3,s:"Tagliafico",pos:"DEF"},{no:4,s:"Romero",pos:"DEF"},{no:5,s:"Otamendi",pos:"DEF"},{no:6,s:"Lisandro",pos:"DEF"},{no:19,s:"Acuña",pos:"DEF"},
+  {no:7,s:"Di María",pos:"MID"},{no:8,s:"De Paul",pos:"MID"},{no:10,s:"Messi",pos:"MID"},{no:14,s:"Enzo",pos:"MID"},{no:18,s:"Mac Allister",pos:"MID"},
+  {no:9,s:"Lautaro",pos:"FWD"},{no:11,s:"Di María",pos:"FWD"},{no:13,s:"Dybala",pos:"FWD"},{no:16,s:"Julián Á.",pos:"FWD"},{no:22,s:"Simeone",pos:"FWD"}
+]},
+"Algeria":{flag:"🇩🇿",color:"#006233",group:"J",conf:"CAF",players:[
+  {no:1,s:"Mandrea",pos:"GK"},{no:12,s:"Ghacha",pos:"GK"},{no:23,s:"Bencherif",pos:"GK"},
+  {no:2,s:"Atal",pos:"DEF"},{no:3,s:"Bennacer",pos:"DEF"},{no:4,s:"Mandi",pos:"DEF"},{no:5,s:"Tahrat",pos:"DEF"},{no:6,s:"Zitoun",pos:"DEF"},{no:21,s:"Bensebaini",pos:"DEF"},
+  {no:7,s:"Ounas",pos:"MID"},{no:8,s:"Benlahrèche",pos:"MID"},{no:10,s:"Belaili",pos:"MID"},{no:14,s:"Zerrouki",pos:"MID"},{no:17,s:"Boudaoui",pos:"MID"},
+  {no:9,s:"Slimani",pos:"FWD"},{no:11,s:"Bounedjah",pos:"FWD"},{no:13,s:"Brahimi",pos:"FWD"}
+]},
+"Austria":{flag:"🇦🇹",color:"#ED2939",group:"J",conf:"UEFA",players:[
+  {no:1,s:"Pentz",pos:"GK"},{no:12,s:"Lindner",pos:"GK"},{no:23,s:"Pervan",pos:"GK"},
+  {no:2,s:"Posch",pos:"DEF"},{no:3,s:"Alaba",pos:"DEF"},{no:4,s:"Wöber",pos:"DEF"},{no:5,s:"Trauner",pos:"DEF"},{no:6,s:"Prass",pos:"DEF"},{no:15,s:"Trimmel",pos:"DEF"},
+  {no:7,s:"Wimmer",pos:"MID"},{no:8,s:"Laimer",pos:"MID"},{no:10,s:"Sabitzer",pos:"MID"},{no:14,s:"Baumgartner",pos:"MID"},{no:17,s:"Grillitsch",pos:"MID"},
+  {no:9,s:"Arnautović",pos:"FWD"},{no:11,s:"Gregoritsch",pos:"FWD"},{no:13,s:"Adamu",pos:"FWD"},{no:18,s:"Kainz",pos:"FWD"}
+]},
+"Jordan":{flag:"🇯🇴",color:"#007A3D",group:"J",conf:"AFC",players:[
+  {no:1,s:"Shbair",pos:"GK"},{no:12,s:"Shafy",pos:"GK"},{no:23,s:"Kayid",pos:"GK"},
+  {no:2,s:"Al-Rawabdeh",pos:"DEF"},{no:3,s:"Obeidat",pos:"DEF"},{no:4,s:"Abu Zema",pos:"DEF"},{no:5,s:"Al Tamari",pos:"DEF"},{no:6,s:"Zayn",pos:"DEF"},
+  {no:7,s:"Baha",pos:"MID"},{no:8,s:"Shadi",pos:"MID"},{no:10,s:"Yazan",pos:"MID"},{no:14,s:"Musa",pos:"MID"},{no:16,s:"Nader",pos:"MID"},
+  {no:9,s:"Baha Faisal",pos:"FWD"},{no:11,s:"Ibrahim S.",pos:"FWD"},{no:13,s:"Tariq",pos:"FWD"}
+]},
+// ── GROUP K ──
+"Portugal":{flag:"🇵🇹",color:"#006600",group:"K",conf:"UEFA",players:[
+  {no:1,s:"Rui Patrício",pos:"GK"},{no:12,s:"José Sá",pos:"GK"},{no:23,s:"Costa D.",pos:"GK"},
+  {no:2,s:"Cancelo",pos:"DEF"},{no:3,s:"Guerreiro",pos:"DEF"},{no:4,s:"Rúben Dias",pos:"DEF"},{no:5,s:"Pepe",pos:"DEF"},{no:6,s:"Danilo P.",pos:"DEF"},{no:16,s:"Inácio",pos:"DEF"},
+  {no:7,s:"Ronaldo",pos:"MID"},{no:8,s:"Moutinho",pos:"MID"},{no:10,s:"Bernardo S.",pos:"MID"},{no:14,s:"Ruben N.",pos:"MID"},{no:17,s:"Joao Félix",pos:"MID"},
+  {no:9,s:"André Silva",pos:"FWD"},{no:11,s:"Joao Cancelo",pos:"FWD"},{no:13,s:"Ramos",pos:"FWD"},{no:18,s:"Pedro",pos:"FWD"},{no:19,s:"Trincão",pos:"FWD"}
+]},
+"Colombia":{flag:"🇨🇴",color:"#FCD116",group:"K",conf:"CONMEBOL",players:[
+  {no:1,s:"Vargas D.",pos:"GK"},{no:12,s:"Cuadrado",pos:"GK"},{no:23,s:"Ospina",pos:"GK"},
+  {no:2,s:"Munoz",pos:"DEF"},{no:3,s:"Mojica",pos:"DEF"},{no:4,s:"Sanchez",pos:"DEF"},{no:5,s:"Lucumi",pos:"DEF"},{no:6,s:"Mina",pos:"DEF"},{no:16,s:"Cuesta",pos:"DEF"},
+  {no:7,s:"Quintero",pos:"MID"},{no:8,s:"Barrios",pos:"MID"},{no:10,s:"James",pos:"MID"},{no:14,s:"Rios",pos:"MID"},{no:17,s:"Lerma",pos:"MID"},
+  {no:9,s:"Borja",pos:"FWD"},{no:11,s:"Díaz L.",pos:"FWD"},{no:13,s:"Arango",pos:"FWD"},{no:18,s:"Morelos",pos:"FWD"}
+]},
+"Uzbekistan":{flag:"🇺🇿",color:"#1EB53A",group:"K",conf:"AFC",players:[
+  {no:1,s:"Nishonov",pos:"GK"},{no:12,s:"Yusupov K.",pos:"GK"},{no:23,s:"Ergashev",pos:"GK"},
+  {no:2,s:"Ashurmatov",pos:"DEF"},{no:3,s:"Jaloliddinov",pos:"DEF"},{no:4,s:"Komilov",pos:"DEF"},{no:5,s:"Alijonov",pos:"DEF"},{no:6,s:"Makhammadaliev",pos:"DEF"},
+  {no:7,s:"Maxmudov",pos:"MID"},{no:8,s:"Yakhshiboev",pos:"MID"},{no:10,s:"Shomurodov",pos:"MID"},{no:14,s:"Tursunov",pos:"MID"},{no:17,s:"Hamrobekov",pos:"MID"},
+  {no:9,s:"Djeparov",pos:"FWD"},{no:11,s:"Nasrullayev",pos:"FWD"},{no:13,s:"Bakhshulloyev",pos:"FWD"}
+]},
+"DR Congo":{flag:"🇨🇩",color:"#007FFF",group:"K",conf:"CAF",players:[
+  {no:1,s:"Mpasi",pos:"GK"},{no:12,s:"Kiassumbua",pos:"GK"},{no:23,s:"Luyindama GK",pos:"GK"},
+  {no:2,s:"Ngadeu",pos:"DEF"},{no:3,s:"Bolingi",pos:"DEF"},{no:4,s:"Luyindama",pos:"DEF"},{no:5,s:"Kayembe",pos:"DEF"},{no:6,s:"Mbemba",pos:"DEF"},{no:16,s:"Tshibola",pos:"DEF"},
+  {no:7,s:"Bakambu",pos:"MID"},{no:8,s:"Tissoudali",pos:"MID"},{no:10,s:"Kakuta",pos:"MID"},{no:14,s:"Lemina",pos:"MID"},{no:17,s:"Nkunku",pos:"MID"},
+  {no:9,s:"Bongonda",pos:"FWD"},{no:11,s:"Mbuku",pos:"FWD"},{no:13,s:"Ilunga",pos:"FWD"}
+]},
+// ── GROUP L ──
+"England":{flag:"🏴󠁧󠁢󠁥󠁮󠁧󠁿",color:"#FFFFFF",group:"L",conf:"UEFA",players:[
+  {no:1,s:"Pickford",pos:"GK"},{no:13,s:"Ramsdale",pos:"GK"},{no:23,s:"Flaherty",pos:"GK"},
+  {no:2,s:"Alexander-Arnold",pos:"DEF"},{no:3,s:"Shaw",pos:"DEF"},{no:4,s:"Stones",pos:"DEF"},{no:5,s:"Maguire",pos:"DEF"},{no:6,s:"Trippier",pos:"DEF"},{no:12,s:"Walker",pos:"DEF"},
+  {no:7,s:"Saka",pos:"MID"},{no:8,s:"Bellingham",pos:"MID"},{no:10,s:"Foden",pos:"MID"},{no:14,s:"Rice",pos:"MID"},{no:18,s:"Gallagher",pos:"MID"},
+  {no:9,s:"Kane",pos:"FWD"},{no:11,s:"Rashford",pos:"FWD"},{no:15,s:"Toney",pos:"FWD"},{no:17,s:"Palmer",pos:"FWD"},{no:19,s:"Gordon",pos:"FWD"}
+]},
+"Croatia":{flag:"🇭🇷",color:"#FF0000",group:"L",conf:"UEFA",players:[
+  {no:1,s:"Livaković",pos:"GK"},{no:12,s:"Grbić",pos:"GK"},{no:23,s:"Ivušić",pos:"GK"},
+  {no:2,s:"Juranović",pos:"DEF"},{no:3,s:"Gvardiol",pos:"DEF"},{no:4,s:"Lovren",pos:"DEF"},{no:5,s:"Erlic",pos:"DEF"},{no:6,s:"Sosa",pos:"DEF"},{no:19,s:"Šutalo",pos:"DEF"},
+  {no:7,s:"Brozović",pos:"MID"},{no:8,s:"Kovačić",pos:"MID"},{no:10,s:"Modric",pos:"MID"},{no:14,s:"Majer",pos:"MID"},{no:17,s:"Vlašić",pos:"MID"},
+  {no:9,s:"Petković",pos:"FWD"},{no:11,s:"Kramarić",pos:"FWD"},{no:13,s:"Perisic",pos:"FWD"},{no:15,s:"Budimir",pos:"FWD"}
+]},
+"Ghana":{flag:"🇬🇭",color:"#006B3F",group:"L",conf:"CAF",players:[
+  {no:1,s:"Wollacott",pos:"GK"},{no:12,s:"Ati Zigi",pos:"GK"},{no:23,s:"Mensah B.",pos:"GK"},
+  {no:2,s:"Lamptey",pos:"DEF"},{no:3,s:"Rahman",pos:"DEF"},{no:4,s:"Amartey",pos:"DEF"},{no:5,s:"Salisu",pos:"DEF"},{no:6,s:"Mensah A.",pos:"DEF"},{no:15,s:"Baba",pos:"DEF"},
+  {no:7,s:"Ayew A.",pos:"MID"},{no:8,s:"Partey",pos:"MID"},{no:10,s:"Ayew J.",pos:"MID"},{no:14,s:"Kudus",pos:"MID"},{no:16,s:"Suhuyini",pos:"MID"},
+  {no:9,s:"Williams",pos:"FWD"},{no:11,s:"Inaki",pos:"FWD"},{no:13,s:"Acquah",pos:"FWD"}
+]},
+"Panama":{flag:"🇵🇦",color:"#DA121A",group:"L",conf:"CONCACAF",players:[
+  {no:1,s:"Penedo",pos:"GK"},{no:12,s:"Mosquera",pos:"GK"},{no:23,s:"de Obarrio",pos:"GK"},
+  {no:2,s:"Murillo",pos:"DEF"},{no:3,s:"Davis",pos:"DEF"},{no:4,s:"Miller",pos:"DEF"},{no:5,s:"Góndola",pos:"DEF"},{no:6,s:"Torres E.",pos:"DEF"},{no:16,s:"Escobar",pos:"DEF"},
+  {no:7,s:"Godoy",pos:"MID"},{no:8,s:"Carrasquilla",pos:"MID"},{no:10,s:"Fajardo",pos:"MID"},{no:14,s:"Brown",pos:"MID"},{no:17,s:"Quintero",pos:"MID"},
+  {no:9,s:"Blackburn",pos:"FWD"},{no:11,s:"Cox",pos:"FWD"},{no:13,s:"Arroyo",pos:"FWD"}
+]}
+};
+
+const POS_C={GK:'#e67e22',DEF:'#2471a3',MID:'#1e8449',FWD:'#c0392b'};
+
+// ── STATE ──
+let homeTeam = 'USA', awayTeam = null;
+let tokens   = [];  // {player, x, y, role, side:'home'|'away'}
+let drawings = [];
+let dragIdx  = null, dox = 0, doy = 0;
+let tool = 'select', drawColor = '#ffffff', strokeW = 2;
+let isDrawing = false, drawStart = null, freehandPts = [];
+
+const cv  = document.getElementById('cv');
+const ctx = cv.getContext('2d');
+let W=0, H=0;
+const R    = () => Math.min(W,H)*0.028;
+const hitR = t  => t.role==='sub' ? Math.min(W,H)*0.022 : R();
+
+// ── RESIZE ──
+function resize(){
+  const wrap=document.querySelector('.pitch-wrap');
+  W=wrap.clientWidth; H=wrap.clientHeight;
+  cv.width=W; cv.height=H; draw();
+}
+
+// ── DRAW ──
+function draw(preview){
+  if(!W||!H)return;
+  drawPitch(ctx);
+  drawings.forEach(s=>renderShape(ctx,s));
+  if(preview)renderShape(ctx,preview);
+  tokens.forEach((t,i)=>{
+    t.role==='sub'
+      ? drawSubToken(ctx,t.player,t.x,t.y,i===dragIdx,t.side)
+      : drawStarterToken(ctx,t.player,t.x,t.y,i===dragIdx,t.side);
+  });
+}
+
+function drawPitch(c){
+  const nS=12;
+  for(let i=0;i<nS;i++){c.fillStyle=i%2===0?'#2d8a3e':'#298039';c.fillRect(i*(W/nS),0,W/nS,H);}
+  const px=W*0.03,py=H*0.06,fw=W-px*2,fh=H-py*2,fx=px,fy=py;
+  c.strokeStyle='rgba(255,255,255,.55)';c.lineWidth=1.5;
+  c.strokeRect(fx,fy,fw,fh);
+  const midX=fx+fw/2;
+  c.beginPath();c.moveTo(midX,fy);c.lineTo(midX,fy+fh);c.stroke();
+  c.beginPath();c.arc(midX,fy+fh/2,fh*0.18,0,Math.PI*2);c.stroke();
+  c.beginPath();c.arc(midX,fy+fh/2,3,0,Math.PI*2);c.fillStyle='rgba(255,255,255,.6)';c.fill();
+  const paW=fw*0.13,paH=fh*0.55,s6W=fw*0.055,s6H=fh*0.28;
+  c.strokeRect(fx,fy+(fh-paH)/2,paW,paH);c.strokeRect(fx,fy+(fh-s6H)/2,s6W,s6H);
+  c.beginPath();c.arc(fx+fw*0.115,fy+fh/2,3,0,Math.PI*2);c.fillStyle='rgba(255,255,255,.55)';c.fill();
+  c.beginPath();c.arc(fx+fw*0.115,fy+fh/2,fh*0.16,-Math.PI*0.38,Math.PI*0.38);c.stroke();
+  c.strokeRect(fx+fw-paW,fy+(fh-paH)/2,paW,paH);c.strokeRect(fx+fw-s6W,fy+(fh-s6H)/2,s6W,s6H);
+  c.beginPath();c.arc(fx+fw*0.885,fy+fh/2,3,0,Math.PI*2);c.fillStyle='rgba(255,255,255,.55)';c.fill();
+  c.beginPath();c.arc(fx+fw*0.885,fy+fh/2,fh*0.16,Math.PI*0.62,Math.PI*1.38);c.stroke();
+  [[fx,fy,0,Math.PI/2],[fx+fw,fy,Math.PI/2,Math.PI],[fx+fw,fy+fh,Math.PI,1.5*Math.PI],[fx,fy+fh,1.5*Math.PI,2*Math.PI]].forEach(([cx2,cy2,a1,a2])=>{c.beginPath();c.arc(cx2,cy2,fh*0.04,a1,a2);c.stroke();});
+  c.fillStyle='rgba(255,255,255,.4)';const gH=fh*0.2,gD=W*0.018;
+  c.fillRect(fx-gD,fy+(fh-gH)/2,gD,gH);c.fillRect(fx+fw,fy+(fh-gH)/2,gD,gH);
+}
+
+function renderShape(c,s){
+  c.save();c.strokeStyle=s.color;c.fillStyle=s.color;c.lineWidth=s.w;c.lineCap='round';c.lineJoin='round';
+  if(s.type==='arrow'||s.type==='darrow'){
+    if(s.type==='darrow')c.setLineDash([10,6]);
+    c.beginPath();c.moveTo(s.x1,s.y1);c.lineTo(s.x2,s.y2);c.stroke();c.setLineDash([]);
+    drawArrowHead(c,s.x1,s.y1,s.x2,s.y2,s.w);
+  } else if(s.type==='curve'){
+    const cx2=s.cx,cy2=s.cy;
+    c.beginPath();c.moveTo(s.x1,s.y1);c.quadraticCurveTo(cx2,cy2,s.x2,s.y2);c.stroke();
+    const tx=s.x2-cx2,ty=s.y2-cy2;drawArrowHead(c,s.x2-tx*0.01,s.y2-ty*0.01,s.x2,s.y2,s.w);
+  } else if(s.type==='line'){
+    c.beginPath();c.moveTo(s.x1,s.y1);c.lineTo(s.x2,s.y2);c.stroke();
+  } else if(s.type==='circle'){
+    const rx=Math.abs(s.x2-s.x1)/2,ry=Math.abs(s.y2-s.y1)/2,cx2=(s.x1+s.x2)/2,cy2=(s.y1+s.y2)/2;
+    c.beginPath();c.ellipse(cx2,cy2,Math.max(rx,4),Math.max(ry,4),0,0,Math.PI*2);
+    c.globalAlpha=0.18;c.fill();c.globalAlpha=1;c.stroke();
+  } else if(s.type==='freehand'&&s.pts&&s.pts.length>1){
+    c.beginPath();c.moveTo(s.pts[0].x,s.pts[0].y);
+    for(let i=1;i<s.pts.length;i++){const mx=(s.pts[i-1].x+s.pts[i].x)/2,my=(s.pts[i-1].y+s.pts[i].y)/2;c.quadraticCurveTo(s.pts[i-1].x,s.pts[i-1].y,mx,my);}
+    c.lineTo(s.pts[s.pts.length-1].x,s.pts[s.pts.length-1].y);c.stroke();
+  }
+  c.restore();
+}
+function drawArrowHead(c,x1,y1,x2,y2,w){
+  const angle=Math.atan2(y2-y1,x2-x1),len=Math.max(10,w*4),sp=0.45;
+  c.save();c.fillStyle=c.strokeStyle;
+  c.beginPath();c.moveTo(x2,y2);c.lineTo(x2-len*Math.cos(angle-sp),y2-len*Math.sin(angle-sp));c.lineTo(x2-len*Math.cos(angle+sp),y2-len*Math.sin(angle+sp));c.closePath();c.fill();c.restore();
+}
+
+function teamColor(side){
+  if(side==='home'&&homeTeam&&TEAMS[homeTeam])return TEAMS[homeTeam].color;
+  if(side==='away'&&awayTeam&&TEAMS[awayTeam])return TEAMS[awayTeam].color;
+  return '#888';
+}
+
+function drawStarterToken(c,p,cx2,cy2,dragging,side){
+  const r=R(),col=teamColor(side);
+  c.save();c.shadowColor='rgba(0,0,0,.55)';c.shadowBlur=dragging?18:9;
+  c.beginPath();c.arc(cx2,cy2,r,0,Math.PI*2);c.fillStyle='#fff';c.fill();c.restore();
+  c.beginPath();c.arc(cx2,cy2,r,0,Math.PI*2);c.fillStyle='#fff';c.fill();
+  c.strokeStyle=dragging?'#f0c040':col;c.lineWidth=dragging?3.5:3;c.stroke();
+  // Colored fill tint
+  c.beginPath();c.arc(cx2,cy2,r,0,Math.PI*2);c.fillStyle=col+'22';c.fill();
+  c.fillStyle='#111';c.font=`900 ${Math.round(r*1.2)}px 'Barlow Condensed',Arial`;
+  c.textAlign='center';c.textBaseline='middle';c.fillText(p.no,cx2,cy2);
+  const ns=Math.max(8,Math.round(r*0.52));
+  c.font=`700 ${ns}px 'Barlow Condensed',Arial`;const tw=c.measureText(p.s).width;
+  c.fillStyle='rgba(0,0,0,.7)';c.beginPath();c.roundRect(cx2-tw/2-5,cy2+r+2,tw+10,ns+5,3);c.fill();
+  c.fillStyle='#fff';c.textAlign='center';c.textBaseline='top';c.fillText(p.s,cx2,cy2+r+4);
+}
+function drawSubToken(c,p,cx2,cy2,dragging,side){
+  const r=Math.min(W,H)*0.022,ns=Math.max(8,Math.round(r*0.78));
+  c.save();c.globalAlpha=dragging?1.0:0.75;
+  c.font=`italic 700 ${ns}px 'Barlow Condensed',Arial`;
+  c.shadowColor='rgba(0,0,0,.8)';c.shadowBlur=4;
+  c.fillStyle=dragging?'#f0c040':'#fff';
+  c.textAlign='center';c.textBaseline='middle';c.fillText(p.s,cx2,cy2);c.restore();
+}
+
+// ── CANVAS EVENTS ──
+function ptXY(e){const r=cv.getBoundingClientRect();return{x:(e.clientX-r.left)*(W/r.width),y:(e.clientY-r.top)*(H/r.height)};}
+function dist(ax,ay,bx,by){return Math.hypot(ax-bx,ay-by);}
+function buildPreview(x,y){
+  if(!drawStart)return null;
+  const s={color:drawColor,w:strokeW};
+  if(tool==='arrow')return{...s,type:'arrow',x1:drawStart.x,y1:drawStart.y,x2:x,y2:y};
+  if(tool==='darrow')return{...s,type:'darrow',x1:drawStart.x,y1:drawStart.y,x2:x,y2:y};
+  if(tool==='line')return{...s,type:'line',x1:drawStart.x,y1:drawStart.y,x2:x,y2:y};
+  if(tool==='circle')return{...s,type:'circle',x1:drawStart.x,y1:drawStart.y,x2:x,y2:y};
+  if(tool==='curve'){const cx2=(drawStart.x+x)/2-(y-drawStart.y)*0.4,cy2=(drawStart.y+y)/2+(x-drawStart.x)*0.4;return{...s,type:'curve',x1:drawStart.x,y1:drawStart.y,cx:cx2,cy:cy2,x2:x,y2:y};}
+  return null;
+}
+
+cv.addEventListener('mousedown',e=>{
+  const{x,y}=ptXY(e);
+  if(tool==='select'){for(let i=tokens.length-1;i>=0;i--){if(dist(x,y,tokens[i].x,tokens[i].y)<hitR(tokens[i])){dragIdx=i;dox=x-tokens[i].x;doy=y-tokens[i].y;cv.style.cursor='grabbing';return;}}return;}
+  if(tool==='freehand'){isDrawing=true;freehandPts=[{x,y}];return;}
+  isDrawing=true;drawStart={x,y};
+});
+cv.addEventListener('mousemove',e=>{
+  const{x,y}=ptXY(e);
+  if(tool==='select'){
+    if(dragIdx!==null){tokens[dragIdx].x=Math.max(R(),Math.min(W-R(),x-dox));tokens[dragIdx].y=Math.max(R(),Math.min(H-R(),y-doy));draw();}
+    else cv.style.cursor=tokens.some(t=>dist(x,y,t.x,t.y)<hitR(t))?'grab':'default';
+    return;
+  }
+  cv.style.cursor='crosshair';if(!isDrawing)return;
+  if(tool==='freehand'){freehandPts.push({x,y});draw({type:'freehand',color:drawColor,w:strokeW,pts:[...freehandPts]});return;}
+  draw(buildPreview(x,y));
+});
+cv.addEventListener('mouseup',e=>{
+  const{x,y}=ptXY(e);
+  if(tool==='select'){if(dragIdx!==null){dragIdx=null;cv.style.cursor='default';draw();}return;}
+  if(!isDrawing)return;isDrawing=false;
+  if(tool==='freehand'){if(freehandPts.length>2)drawings.push({type:'freehand',color:drawColor,w:strokeW,pts:[...freehandPts]});freehandPts=[];draw();return;}
+  const shape=buildPreview(x,y);if(shape&&dist(drawStart.x,drawStart.y,x,y)>6)drawings.push(shape);drawStart=null;draw();
+});
+cv.addEventListener('mouseleave',()=>{
+  if(dragIdx!==null){dragIdx=null;draw();}
+  if(isDrawing&&tool==='freehand'&&freehandPts.length>2){drawings.push({type:'freehand',color:drawColor,w:strokeW,pts:[...freehandPts]});freehandPts=[];isDrawing=false;draw();}
+});
+cv.addEventListener('contextmenu',e=>{
+  e.preventDefault();if(tool!=='select'){if(drawings.length){drawings.pop();draw();}return;}
+  const{x,y}=ptXY(e);for(let i=tokens.length-1;i>=0;i--){if(dist(x,y,tokens[i].x,tokens[i].y)<hitR(tokens[i])){tokens.splice(i,1);draw();renderPanels();return;}}
+  if(drawings.length){drawings.pop();draw();}
+});
+cv.addEventListener('touchstart',e=>{e.preventDefault();const t=e.touches[0],{x,y}=ptXY({clientX:t.clientX,clientY:t.clientY});
+  if(tool==='select'){for(let i=tokens.length-1;i>=0;i--){if(dist(x,y,tokens[i].x,tokens[i].y)<hitR(tokens[i])+8){dragIdx=i;dox=x-tokens[i].x;doy=y-tokens[i].y;return;}}}
+  else{isDrawing=true;if(tool==='freehand')freehandPts=[{x,y}];else drawStart={x,y};}
+},{passive:false});
+cv.addEventListener('touchmove',e=>{e.preventDefault();const t=e.touches[0],{x,y}=ptXY({clientX:t.clientX,clientY:t.clientY});
+  if(tool==='select'){if(dragIdx===null)return;tokens[dragIdx].x=Math.max(R(),Math.min(W-R(),x-dox));tokens[dragIdx].y=Math.max(R(),Math.min(H-R(),y-doy));draw();}
+  else if(isDrawing){if(tool==='freehand'){freehandPts.push({x,y});draw({type:'freehand',color:drawColor,w:strokeW,pts:[...freehandPts]});}else draw(buildPreview(x,y));}
+},{passive:false});
+cv.addEventListener('touchend',e=>{
+  const last=e.changedTouches[0],{x,y}=ptXY({clientX:last.clientX,clientY:last.clientY});
+  if(tool==='select'){if(dragIdx!==null){dragIdx=null;draw();}return;}
+  if(!isDrawing)return;isDrawing=false;
+  if(tool==='freehand'){if(freehandPts.length>2)drawings.push({type:'freehand',color:drawColor,w:strokeW,pts:[...freehandPts]});freehandPts=[];}
+  else{const s=buildPreview(x,y);if(s&&dist(drawStart.x,drawStart.y,x,y)>6)drawings.push(s);drawStart=null;}
+  draw();
+});
+
+// ── TOOLBAR ──
+['select','arrow','darrow','curve','line','circle','freehand'].forEach(id=>{
+  const b=document.getElementById('tool-'+id);if(!b)return;
+  b.onclick=()=>{
+    tool=id;
+    document.querySelectorAll('.tb-btn[id^="tool-"]').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    cv.style.cursor=id==='select'?'default':'crosshair';
+  };
+});
+document.querySelectorAll('.swatch').forEach(el=>{
+  el.onclick=()=>{document.querySelectorAll('.swatch').forEach(c=>c.classList.remove('active'));el.classList.add('active');drawColor=el.dataset.color;};
+});
+document.querySelectorAll('[data-w]').forEach(el=>{
+  el.onclick=()=>{document.querySelectorAll('[data-w]').forEach(b=>b.classList.remove('active'));el.classList.add('active');strokeW=parseInt(el.dataset.w);};
+});
+document.getElementById('btn-undo').onclick=()=>{drawings.pop();draw();};
+document.getElementById('btn-clear-draw').onclick=()=>{if(confirm('Clear all drawings?')){drawings=[];draw();}};
+document.getElementById('btn-clear-all').onclick=()=>{if(confirm('Clear everything?')){tokens=[];drawings=[];draw();renderPanels();}};
+
+// ── PANELS ──
+function onField(no,side){return tokens.some(t=>t.player.no===no&&t.side===side);}
+function renderPanels(){
+  buildPanel('pl','home');
+  buildPanel('pr','away');
+}
+function buildPanel(id,side){
+  const el=document.getElementById(id);el.innerHTML='';
+  const key=side==='home'?homeTeam:awayTeam;
+  if(!key||!TEAMS[key]){
+    el.innerHTML=`<div style="padding:12px 6px;text-align:center;color:var(--muted);font-size:11px;line-height:1.5">${side==='home'?'Home':'Away'} team<br>not selected</div>`;return;
+  }
+  const team=TEAMS[key];
+  const col=team.color;
+  const header=document.createElement('div');
+  header.style.cssText=`padding:7px 5px 4px;text-align:center;font-size:11px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;border-bottom:2px solid ${col};margin-bottom:2px;color:#fff`;
+  header.innerHTML=`${team.flag} ${key}`;
+  el.appendChild(header);
+  ['GK','DEF','MID','FWD'].forEach(pos=>{
+    const players=team.players.filter(p=>p.pos===pos);if(!players.length)return;
+    const sec=document.createElement('div');sec.className='psec';sec.textContent=pos==='GK'?'GKs':pos==='DEF'?'DEF':pos==='MID'?'MID':'FWD';el.appendChild(sec);
+    players.forEach(p=>{
+      const row=document.createElement('div');row.className='prow'+(onField(p.no,side)?' on':'');
+      row.innerHTML=`<span class="prow-no" style="color:${col}">${p.no}</span><div><div class="prow-name">${p.s}</div><span class="prow-pos ${p.pos}">${p.pos}</span></div>`;
+      if(!onField(p.no,side))row.onclick=()=>showRolePrompt(p,side);
+      el.appendChild(row);
+    });
+  });
+}
+
+// ── ROLE PROMPT ──
+function showRolePrompt(p,side){
+  const ov=document.getElementById('mo');ov.innerHTML='';ov.style.display='flex';
+  const box=document.createElement('div');
+  box.style.cssText='background:#1a1a2e;border:1.5px solid var(--accent);border-radius:10px;width:280px;overflow:hidden;font-family:Barlow Condensed,sans-serif';
+  const hdr=document.createElement('div');hdr.style.cssText='padding:12px 16px;border-bottom:1px solid rgba(255,255,255,.1);display:flex;align-items:center;justify-content:space-between';
+  hdr.innerHTML=`<div><div style="font-size:14px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:#fff">Add Player</div><div style="font-size:11px;color:var(--gold);font-weight:700;margin-top:1px">#${p.no} ${p.s}</div></div>`;
+  const cls=document.createElement('button');cls.textContent='×';cls.style.cssText='background:transparent;border:none;color:#8899aa;font-size:18px;cursor:pointer;line-height:1;padding:0';cls.onclick=()=>ov.style.display='none';hdr.appendChild(cls);box.appendChild(hdr);
+  const bw=document.createElement('div');bw.style.cssText='display:flex';
+  const mkBtn=(label,sub,icon,role,bg)=>{
+    const btn=document.createElement('button');btn.style.cssText=`flex:1;padding:18px 12px;border:none;background:${bg};cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;transition:.12s`;
+    btn.innerHTML=`<span style="font-size:22px">${icon}</span><span style="font-size:13px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:#fff">${label}</span><span style="font-size:10px;color:rgba(255,255,255,.6)">${sub}</span>`;
+    btn.onmouseenter=()=>btn.style.filter='brightness(1.15)';btn.onmouseleave=()=>btn.style.filter='';
+    btn.onclick=()=>{ov.style.display='none';doPlace(p,role,side);};return btn;
+  };
+  bw.appendChild(mkBtn('Starter','Full circle · number','◉','starter','rgba(39,174,96,.25)'));
+  const sep=document.createElement('div');sep.style.cssText='width:1px;background:rgba(255,255,255,.1)';bw.appendChild(sep);
+  bw.appendChild(mkBtn('Sub','Small · italic name','○','sub','rgba(52,152,219,.2)'));
+  box.appendChild(bw);ov.appendChild(box);
+  ov.onclick=e=>{if(e.target===ov)ov.style.display='none';};
+}
+function doPlace(p,role,side){
+  const r=role==='sub'?Math.min(W,H)*0.022:R();
+  // Home = left half, Away = right half
+  const xBase=side==='home'?0.25:0.75;
+  const xZ={GK:side==='home'?0.06:0.94,DEF:side==='home'?0.22:0.78,MID:side==='home'?0.40:0.60,FWD:side==='home'?0.58:0.42};
+  const baseX=W*(xZ[p.pos]||xBase);
+  const same=tokens.filter(t=>t.player.pos===p.pos&&t.side===side).length;
+  const yStep=(H-r*4)/6;const startY=r*2+(same%6)*yStep;
+  tokens.push({player:p,role,side,x:Math.max(r,Math.min(W-r,baseX+(Math.random()-.5)*r*2)),y:Math.max(r,Math.min(H-r,startY+(Math.random()-.5)*r))});
+  draw();renderPanels();
+}
+
+// ── TEAM PICKER ──
+function openTeamPicker(side){
+  const ov=document.getElementById('tpicker');ov.innerHTML='';ov.style.display='flex';
+  const box=document.createElement('div');box.className='tpicker-box';
+  const hdr=document.createElement('div');hdr.className='tpicker-hdr';
+  hdr.innerHTML=`<span class="tpicker-title">Select ${side==='home'?'Home':'Away'} Team</span>`;
+  const cls=document.createElement('button');cls.style.cssText='background:transparent;border:none;color:var(--muted);font-size:18px;cursor:pointer;line-height:1;font-family:inherit';cls.textContent='×';
+  cls.onclick=()=>ov.style.display='none';hdr.appendChild(cls);box.appendChild(hdr);
+  const sr=document.createElement('div');sr.className='tpicker-srch';
+  const inp=document.createElement('input');inp.type='text';inp.placeholder='Search team…';inp.autofocus=true;sr.appendChild(inp);box.appendChild(sr);
+  const body=document.createElement('div');body.className='tpicker-body';box.appendChild(body);
+  function buildGrid(q){
+    body.innerHTML='';
+    const groups={};
+    Object.entries(TEAMS).forEach(([name,team])=>{
+      if(q&&!name.toLowerCase().includes(q.toLowerCase())&&!team.conf.toLowerCase().includes(q.toLowerCase()))return;
+      const g=team.group;if(!groups[g])groups[g]=[];groups[g].push({name,team});
+    });
+    Object.keys(groups).sort().forEach(g=>{
+      const conf=groups[g][0].team.conf;
+      const lbl=document.createElement('div');lbl.className='conf-label';lbl.textContent=`Group ${g} · ${conf}`;body.appendChild(lbl);
+      const grid=document.createElement('div');grid.className='conf-grid';
+      groups[g].forEach(({name,team})=>{
+        const card=document.createElement('div');card.className='team-card';
+        card.innerHTML=`<span class="tc-flag">${team.flag}</span><div><div class="tc-name">${name}</div><div class="tc-grp">Group ${team.group}</div></div>`;
+        card.onclick=()=>{
+          if(side==='home'){homeTeam=name;}else{awayTeam=name;}
+          updateTeamButtons();
+          // Remove tokens from this side
+          tokens=tokens.filter(t=>t.side!==side);
+          ov.style.display='none';renderPanels();draw();
+        };
+        grid.appendChild(card);
+      });
+      body.appendChild(grid);
+    });
+  }
+  buildGrid('');inp.oninput=()=>buildGrid(inp.value);
+  ov.appendChild(box);ov.onclick=e=>{if(e.target===ov)ov.style.display='none';};
+  setTimeout(()=>inp.focus(),50);
+}
+
+function updateTeamButtons(){
+  const ht=TEAMS[homeTeam];const at=awayTeam?TEAMS[awayTeam]:null;
+  document.getElementById('home-flag').textContent=ht?ht.flag:'🏠';
+  document.getElementById('home-name').textContent=homeTeam||'Select';
+  document.getElementById('away-flag').textContent=at?at.flag:'🌍';
+  document.getElementById('away-name').textContent=awayTeam||'Select Team';
+}
+
+document.getElementById('btn-home').onclick=()=>openTeamPicker('home');
+document.getElementById('btn-away').onclick=()=>openTeamPicker('away');
+
+// ── EXPORT ──
+document.getElementById('xbtn').onclick=()=>{const a=document.createElement('a');a.download='WC2026_Tactics.png';a.href=cv.toDataURL('image/png');a.click();};
+
+// ── INIT ──
+window.addEventListener('resize',resize);
+requestAnimationFrame(()=>requestAnimationFrame(()=>{resize();updateTeamButtons();renderPanels();}));
+</script>
+</body>
+</html>
