@@ -825,14 +825,39 @@ function deserializeState(state){
   (state.tokens||[]).forEach(t=>{
     const teamKey = t.side==='home' ? homeTeam : awayTeam;
     if(!teamKey||!TEAMS[teamKey]) return;
-    const player = TEAMS[teamKey].players.find(p=>p.no===t.playerNo);
+    const player = TEAMS[teamKey].players.find(p=>p.no===Number(t.playerNo));
     if(!player) return;
     if(t.rating!=null) player.rating=t.rating; else delete player.rating;
-    tokens.push({ player, fx:t.x, fy:t.y, role:t.role, side:t.side });
+    // Migrate old pixel coords to fractions if needed (legacy saves had raw px values)
+    let fx = t.x, fy = t.y;
+    if(fx > 1 || fy > 1){
+      // Old format: pixel values — normalize against typical canvas size (fallback)
+      fx = Math.min(0.99, Math.max(0.01, fx / (W||1400)));
+      fy = Math.min(0.99, Math.max(0.01, fy / (H||700)));
+    }
+    tokens.push({ player, fx, fy, role:t.role, side:t.side });
   });
+  // Restore play builder state (ball + steps)
+  ball = state.ball ? {...state.ball} : null;
+  playSteps = state.playSteps || [];
+  currentStep = playSteps.length - 1;
+  // Reset play state safely (don't call stopPlay which touches DOM)
+  tweenArrows = null;
+  isPlaying = false;
+  clearTimeout(playTimer);
+  if(playTween){ cancelAnimationFrame(playTween); playTween=null; }
+  tweenStart = null;
+  const pb=document.getElementById('pbtn-play');
+  if(pb){pb.classList.remove('playing');pb.textContent='▶ Play';}
   updateTeamButtons();
   renderPanels();
-  draw();
+  // Ensure canvas is sized before drawing
+  function drawWhenReady(){
+    if(W===0||H===0){ requestAnimationFrame(drawWhenReady); return; }
+    draw();
+  }
+  drawWhenReady();
+  if(playMode) updatePlayUI();
 }
 
 function openSaveModal(){
@@ -1175,7 +1200,17 @@ function scheduleNextStep(){
   const pauseMs = parseInt(document.getElementById('play-speed').value) * 0.4;
   playTimer = setTimeout(()=>{
     let next = currentStep + 1;
-    if(next >= playSteps.length) next = 0; // loop
+    if(next >= playSteps.length){
+      // Loop: snap instantly back to step 0 positions, then tween to step 1
+      restoreStep(0, true); // instant snap, no tween
+      currentStep = 0;
+      updatePlayUI();
+      if(playSteps.length > 1){
+        // Brief pause then tween to step 1
+        playTimer = setTimeout(()=>{ doTweenTo(1); }, pauseMs);
+      }
+      return;
+    }
     currentStep = next;
     if(playSteps.length > 0) doTweenTo(currentStep);
   }, pauseMs);
@@ -1504,15 +1539,7 @@ serializeState = function(){
   return base;
 };
 
-const _origDeserialize = deserializeState;
-deserializeState = function(state){
-  _origDeserialize(state);
-  ball = state.ball ? {...state.ball} : null;
-  playSteps = state.playSteps || [];
-  currentStep = playSteps.length-1;
-  if(playMode) updatePlayUI();
-  draw();
-};
+// deserializeState fully defined above — no override needed
 
 // ── INIT ──
 window.addEventListener('resize',resize);
