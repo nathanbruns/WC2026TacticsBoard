@@ -125,6 +125,50 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:#fff;font-famil
 @keyframes spin{0%,100%{transform:rotate(0deg)}40%{transform:rotate(90deg)}60%{transform:rotate(90deg)}}
 .rotate-msg{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:#fff;text-align:center}
 .rotate-sub{font-family:'Barlow Condensed',sans-serif;font-size:14px;color:#99aabb;letter-spacing:.5px;text-align:center}
+
+/* PLAY BUILDER */
+.play-bar{
+  position:absolute;top:10px;left:50%;transform:translateX(-50%);
+  display:none;align-items:center;gap:5px;
+  background:rgba(8,8,22,.95);border:1.5px solid var(--gold);
+  border-radius:10px;padding:5px 8px;z-index:60;
+  box-shadow:0 4px 24px rgba(0,0,0,.6);white-space:nowrap;
+}
+.play-bar.visible{display:flex}
+.play-sep{width:1px;height:24px;background:rgba(255,255,255,.15);margin:0 2px}
+.play-step-btn{
+  display:flex;align-items:center;gap:3px;padding:5px 10px;
+  border-radius:6px;border:none;font-family:'Barlow Condensed',sans-serif;
+  font-size:11px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;
+  cursor:pointer;transition:.12s;
+}
+.pbtn-record{background:rgba(239,68,68,.25);color:#ef4444;border:1.5px solid rgba(239,68,68,.5)}
+.pbtn-record:hover{background:rgba(239,68,68,.4)}
+.pbtn-record.recording{background:#ef4444;color:#fff;animation:rec-pulse 1s infinite}
+@keyframes rec-pulse{0%,100%{opacity:1}50%{opacity:.6}}
+.pbtn-play{background:rgba(39,174,96,.25);color:#27ae60;border:1.5px solid rgba(39,174,96,.5)}
+.pbtn-play:hover{background:rgba(39,174,96,.4)}
+.pbtn-play.playing{background:#27ae60;color:#fff}
+.pbtn-nav{width:28px;height:28px;border-radius:5px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;transition:.12s}
+.pbtn-nav:hover{background:rgba(255,255,255,.1);color:#fff}
+.pbtn-nav:disabled{opacity:.25;pointer-events:none}
+.step-counter{font-size:12px;font-weight:800;color:var(--gold);letter-spacing:.5px;min-width:50px;text-align:center}
+.speed-sel{background:rgba(255,255,255,.08);border:1px solid var(--border);color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;border-radius:4px;padding:3px 5px;outline:none;cursor:pointer}
+.pbtn-gif{background:rgba(168,85,247,.25);color:#a855f7;border:1.5px solid rgba(168,85,247,.5);padding:5px 10px;border-radius:6px;font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;cursor:pointer;transition:.12s}
+.pbtn-gif:hover{background:rgba(168,85,247,.4)}
+.pbtn-del{background:rgba(239,68,68,.15);color:#ef4444;border:1px solid rgba(239,68,68,.3);padding:4px 8px;border-radius:5px;font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:800;cursor:pointer;letter-spacing:.5px;text-transform:uppercase}
+.pbtn-del:hover{background:rgba(239,68,68,.3)}
+/* Step dots */
+.step-dots{display:flex;align-items:center;gap:3px}
+.step-dot{width:8px;height:8px;border-radius:50%;border:1.5px solid rgba(255,255,255,.3);cursor:pointer;transition:.12s;background:transparent}
+.step-dot.filled{background:var(--gold);border-color:var(--gold)}
+.step-dot.active{background:#fff;border-color:#fff;transform:scale(1.3)}
+/* Play mode button in header */
+.play-mode-btn{font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase;padding:5px 10px;border-radius:4px;border:1.5px solid rgba(240,192,64,.4);background:transparent;color:var(--gold);cursor:pointer;white-space:nowrap;transition:.12s}
+.play-mode-btn:hover{background:rgba(240,192,64,.12)}
+.play-mode-btn.active{background:rgba(240,192,64,.2);border-color:var(--gold);color:#fff}
+/* Ball */
+.ball-token{cursor:grab}
 </style>
 </head>
 <body>
@@ -156,6 +200,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:#fff;font-famil
     </button>
   </div>
   <div class="hdr-r">
+    <button class="play-mode-btn" id="btn-play-mode">🎬 Play Builder</button>
     <button class="rate-btn" id="btn-rate">⭐ Rate Players</button>
     <button class="clr-btn" id="btn-clear-ratings">✕ Clear Ratings</button>
     <button class="clr-btn" id="btn-clear-all">Clear All</button>
@@ -170,7 +215,9 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:#fff;font-famil
   <div class="pitch-wrap"><canvas id="cv"></canvas>
     <div class="toolbar" id="toolbar">
       <div style="display:flex;gap:2px">
-        <button class="tb-btn active" id="tool-select"><svg viewBox="0 0 24 24"><path d="M5 3l14 9-7 2-3 7z"/></svg><span class="tb-lbl">Move</span></button>
+        <button class="tb-btn" id="tool-ball" title="Place/move the ball"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 3 C10 7 8 9 3 9"/><path d="M12 3 C14 7 16 9 21 9"/><path d="M3 9 C5 14 9 17 12 21"/><path d="M21 9 C19 14 15 17 12 21"/><path d="M12 21 C11 17 9 14 8 12 S9 8 12 3"/></svg><span class="tb-lbl">Ball</span></button>
+      <div class="tb-sep"></div>
+      <button class="tb-btn active" id="tool-select"><svg viewBox="0 0 24 24"><path d="M5 3l14 9-7 2-3 7z"/></svg><span class="tb-lbl">Move</span></button>
       </div>
       <div class="tb-sep"></div>
       <div style="display:flex;gap:2px">
@@ -201,6 +248,27 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:#fff;font-famil
         <button class="tb-sm" id="btn-undo">↩ Undo</button>
         <button class="tb-sm danger" id="btn-clear-draw">Clear Art</button>
       </div>
+    </div>
+
+    <!-- PLAY BUILDER BAR -->
+    <div class="play-bar" id="play-bar">
+      <button class="play-step-btn pbtn-record" id="pbtn-record">⏺ Record Step</button>
+      <div class="play-sep"></div>
+      <div class="step-dots" id="step-dots"></div>
+      <div class="step-counter" id="step-counter">0 steps</div>
+      <div class="play-sep"></div>
+      <button class="pbtn-nav" id="pbtn-prev">◀</button>
+      <button class="play-step-btn pbtn-play" id="pbtn-play">▶ Play</button>
+      <button class="pbtn-nav" id="pbtn-next">▶</button>
+      <div class="play-sep"></div>
+      <select class="speed-sel" id="play-speed">
+        <option value="1500">Slow</option>
+        <option value="900" selected>Normal</option>
+        <option value="450">Fast</option>
+      </select>
+      <div class="play-sep"></div>
+      <button class="pbtn-del" id="pbtn-del-step">✕ Step</button>
+      <button class="pbtn-gif" id="pbtn-gif">🎬 GIF</button>
     </div>
   </div>
   <div class="panel panel-away" id="pr"></div>
@@ -234,6 +302,9 @@ const ctx = cv.getContext('2d');
 let W=0, H=0;
 const R    = () => Math.min(W,H)*0.028;
 const hitR = t  => t.role==='sub' ? Math.min(W,H)*0.022 : R();
+// Helper: get pixel coords of a token
+const tx = t => t.fx*W;
+const ty = t => t.fy*H;
 
 // ── RESIZE ──
 function resize(){
@@ -249,9 +320,10 @@ function draw(preview){
   drawings.forEach(s=>renderShape(ctx,s));
   if(preview)renderShape(ctx,preview);
   tokens.forEach((t,i)=>{
+    const px=t.fx*W, py=t.fy*H;
     t.role==='sub'
-      ? drawSubToken(ctx,t.player,t.x,t.y,i===dragIdx,t.side)
-      : drawStarterToken(ctx,t.player,t.x,t.y,i===dragIdx,t.side);
+      ? drawSubToken(ctx,t.player,px,py,i===dragIdx,t.side)
+      : drawStarterToken(ctx,t.player,px,py,i===dragIdx,t.side);
   });
 }
 
@@ -409,18 +481,18 @@ cv.addEventListener('mousedown',e=>{
   if(tool==='select'){
     // Rating mode: click opens rating popup, no drag
     if(ratingMode){
-      for(let i=tokens.length-1;i>=0;i--){if(dist(x,y,tokens[i].x,tokens[i].y)<hitR(tokens[i])+6){openRatingPopup(i,x,y);return;}}
+      for(let i=tokens.length-1;i>=0;i--){if(dist(x,y,tx(tokens[i]),ty(tokens[i]))<hitR(tokens[i])+6){openRatingPopup(i,x,y);return;}}
       return;
     }
-    for(let i=tokens.length-1;i>=0;i--){if(dist(x,y,tokens[i].x,tokens[i].y)<hitR(tokens[i])){dragIdx=i;dox=x-tokens[i].x;doy=y-tokens[i].y;cv.style.cursor='grabbing';return;}}return;}
+    for(let i=tokens.length-1;i>=0;i--){if(dist(x,y,tx(tokens[i]),ty(tokens[i]))<hitR(tokens[i])){dragIdx=i;dox=x-tx(tokens[i]);doy=y-ty(tokens[i]);cv.style.cursor='grabbing';return;}}return;}
   if(tool==='freehand'){isDrawing=true;freehandPts=[{x,y}];return;}
   isDrawing=true;drawStart={x,y};
 });
 cv.addEventListener('mousemove',e=>{
   const{x,y}=ptXY(e);
   if(tool==='select'){
-    if(dragIdx!==null){tokens[dragIdx].x=Math.max(R(),Math.min(W-R(),x-dox));tokens[dragIdx].y=Math.max(R(),Math.min(H-R(),y-doy));draw();}
-    else cv.style.cursor=ratingMode?(tokens.some(t=>dist(x,y,t.x,t.y)<hitR(t))?'pointer':'default'):tokens.some(t=>dist(x,y,t.x,t.y)<hitR(t))?'grab':'default';
+    if(dragIdx!==null){tokens[dragIdx].fx=Math.max(R()/W,Math.min(1-R()/W,(x-dox)/W));tokens[dragIdx].fy=Math.max(R()/H,Math.min(1-R()/H,(y-doy)/H));draw();}
+    else cv.style.cursor=ratingMode?(tokens.some(t=>dist(x,y,tx(t),ty(t))<hitR(t))?'pointer':'default'):tokens.some(t=>dist(x,y,tx(t),ty(t))<hitR(t))?'grab':'default';
     return;
   }
   cv.style.cursor='crosshair';if(!isDrawing)return;
@@ -443,17 +515,17 @@ cv.addEventListener('mouseleave',()=>{
 });
 cv.addEventListener('contextmenu',e=>{
   e.preventDefault();if(tool!=='select'){if(drawings.length){drawings.pop();draw();}return;}
-  const{x,y}=ptXY(e);for(let i=tokens.length-1;i>=0;i--){if(dist(x,y,tokens[i].x,tokens[i].y)<hitR(tokens[i])){tokens.splice(i,1);draw();renderPanels();return;}}
+  const{x,y}=ptXY(e);for(let i=tokens.length-1;i>=0;i--){if(dist(x,y,tx(tokens[i]),ty(tokens[i]))<hitR(tokens[i])){tokens.splice(i,1);draw();renderPanels();return;}}
   if(drawings.length){drawings.pop();draw();}
 });
 cv.addEventListener('touchstart',e=>{e.preventDefault();const t=e.touches[0],{x,y}=ptXY({clientX:t.clientX,clientY:t.clientY});
   if(tool==='select'){
-    if(ratingMode){for(let i=tokens.length-1;i>=0;i--){if(dist(x,y,tokens[i].x,tokens[i].y)<hitR(tokens[i])+10){openRatingPopup(i,x,y);return;}}return;}
-    for(let i=tokens.length-1;i>=0;i--){if(dist(x,y,tokens[i].x,tokens[i].y)<hitR(tokens[i])+8){dragIdx=i;dox=x-tokens[i].x;doy=y-tokens[i].y;return;}}}
+    if(ratingMode){for(let i=tokens.length-1;i>=0;i--){if(dist(x,y,tx(tokens[i]),ty(tokens[i]))<hitR(tokens[i])+10){openRatingPopup(i,x,y);return;}}return;}
+    for(let i=tokens.length-1;i>=0;i--){if(dist(x,y,tx(tokens[i]),ty(tokens[i]))<hitR(tokens[i])+8){dragIdx=i;dox=x-tx(tokens[i]);doy=y-ty(tokens[i]);return;}}}
   else{isDrawing=true;if(tool==='freehand')freehandPts=[{x,y}];else drawStart={x,y};}
 },{passive:false});
 cv.addEventListener('touchmove',e=>{e.preventDefault();const t=e.touches[0],{x,y}=ptXY({clientX:t.clientX,clientY:t.clientY});
-  if(tool==='select'){if(dragIdx===null)return;tokens[dragIdx].x=Math.max(R(),Math.min(W-R(),x-dox));tokens[dragIdx].y=Math.max(R(),Math.min(H-R(),y-doy));draw();}
+  if(tool==='select'){if(dragIdx===null)return;tokens[dragIdx].fx=Math.max(R()/W,Math.min(1-R()/W,(x-dox)/W));tokens[dragIdx].fy=Math.max(R()/H,Math.min(1-R()/H,(y-doy)/H));draw();}
   else if(isDrawing){if(tool==='freehand'){freehandPts.push({x,y});draw({type:'freehand',color:drawColor,w:strokeW,pts:[...freehandPts]});}else draw(buildPreview(x,y));}
 },{passive:false});
 cv.addEventListener('touchend',e=>{
@@ -655,7 +727,9 @@ function doPlace(p,role,side){
   const baseX=W*(xZ[p.pos]||xBase);
   const same=tokens.filter(t=>t.player.pos===p.pos&&t.side===side).length;
   const yStep=(H-r*4)/6;const startY=r*2+(same%6)*yStep;
-  tokens.push({player:p,role,side,x:Math.max(r,Math.min(W-r,baseX+(Math.random()-.5)*r*2)),y:Math.max(r,Math.min(H-r,startY+(Math.random()-.5)*r))});
+  const rawX = Math.max(r,Math.min(W-r,baseX+(Math.random()-.5)*r*2));
+  const rawY = Math.max(r,Math.min(H-r,startY+(Math.random()-.5)*r));
+  tokens.push({player:p,role,side,fx:rawX/W,fy:rawY/H});
   draw();renderPanels();
 }
 
@@ -733,8 +807,8 @@ function serializeState(){
     tokens: tokens.map(t=>({
       playerNo: t.player.no,
       playerSide: t.side,
-      x: Math.round(t.x*100)/100,
-      y: Math.round(t.y*100)/100,
+      x: Math.round(t.fx*1000)/1000,
+      y: Math.round(t.fy*1000)/1000,
       role: t.role,
       side: t.side,
       rating: t.player.rating ?? null
@@ -754,7 +828,7 @@ function deserializeState(state){
     const player = TEAMS[teamKey].players.find(p=>p.no===t.playerNo);
     if(!player) return;
     if(t.rating!=null) player.rating=t.rating; else delete player.rating;
-    tokens.push({ player, x:t.x, y:t.y, role:t.role, side:t.side });
+    tokens.push({ player, fx:t.x, fy:t.y, role:t.role, side:t.side });
   });
   updateTeamButtons();
   renderPanels();
@@ -883,6 +957,562 @@ document.getElementById('btn-save').onclick=()=>{
   openSaveModal();
 };
 document.getElementById('btn-load').onclick=()=>openSaveModal();
+
+
+// ═══════════════════════════════════════════════
+// PLAY BUILDER
+// ═══════════════════════════════════════════════
+
+// Ball state: fractional coords, null if not placed
+let ball = null; // {fx, fy}
+let ballDrag = false;
+
+// Play steps: each step = {tokens: [{playerNo, side, fx, fy, role}], ball: {fx,fy}|null, drawings: [...]}
+let playSteps = [];
+let currentStep = -1; // which step we're viewing (-1 = live)
+let playMode = false;
+let isPlaying = false;
+let playTimer = null;
+let playTween = null; // requestAnimationFrame handle
+
+// Tween state
+let tweenFrom = null, tweenTo = null, tweenT = 0, tweenDuration = 900;
+
+function enterPlayMode(){
+  playMode = true;
+  document.getElementById('play-bar').classList.add('visible');
+  document.getElementById('btn-play-mode').classList.add('active');
+  document.getElementById('btn-play-mode').textContent = '✕ Exit Builder';
+  document.querySelector('.toolbar').style.display = 'none';
+  ratingMode = false;
+  document.getElementById('btn-rate').classList.remove('active');
+  document.getElementById('btn-rate').textContent = '⭐ Rate Players';
+  updatePlayUI();
+}
+
+function exitPlayMode(){
+  stopPlay();
+  playMode = false;
+  currentStep = -1;
+  document.getElementById('play-bar').classList.remove('visible');
+  document.getElementById('btn-play-mode').classList.remove('active');
+  document.getElementById('btn-play-mode').textContent = '🎬 Play Builder';
+  document.querySelector('.toolbar').style.display = '';
+  draw();
+}
+
+function captureStep(){
+  const snap = {
+    tokens: tokens.map(t=>({
+      playerNo: t.player.no,
+      side: t.side,
+      role: t.role,
+      fx: t.fx,
+      fy: t.fy,
+    })),
+    ball: ball ? {...ball} : null,
+    drawings: JSON.parse(JSON.stringify(drawings))
+  };
+
+  if(currentStep === -1 || currentStep === playSteps.length - 1){
+    // Append new step
+    playSteps.push(snap);
+    currentStep = playSteps.length - 1;
+  } else {
+    // Insert/overwrite after current
+    playSteps.splice(currentStep + 1, playSteps.length - currentStep - 1, snap);
+    currentStep = playSteps.length - 1;
+  }
+  updatePlayUI();
+  draw();
+
+  // Flash record button
+  const rb = document.getElementById('pbtn-record');
+  rb.classList.add('recording');
+  setTimeout(()=>rb.classList.remove('recording'), 600);
+}
+
+function restoreStep(stepIdx, instant=false){
+  if(stepIdx < 0 || stepIdx >= playSteps.length) return;
+  const s = playSteps[stepIdx];
+  currentStep = stepIdx;
+
+  // Restore drawings for this step
+  drawings = JSON.parse(JSON.stringify(s.drawings));
+
+  if(instant){
+    // Snap positions
+    s.tokens.forEach(st=>{
+      const tok = tokens.find(t=>t.player.no===st.playerNo && t.side===st.side);
+      if(tok){ tok.fx=st.fx; tok.fy=st.fy; }
+    });
+    ball = s.ball ? {...s.ball} : null;
+    updatePlayUI();
+    draw();
+  } else {
+    // Tween from current to target
+    tweenFrom = {
+      tokens: tokens.map(t=>({no:t.player.no, side:t.side, fx:t.fx, fy:t.fy})),
+      ball: ball ? {...ball} : null
+    };
+    tweenTo = {
+      tokens: s.tokens.map(st=>({no:st.playerNo, side:st.side, fx:st.fx, fy:st.fy})),
+      ball: s.ball ? {...s.ball} : null,
+      drawings: s.drawings
+    };
+    tweenT = 0;
+    tweenDuration = parseInt(document.getElementById('play-speed').value);
+    if(playTween) cancelAnimationFrame(playTween);
+    animateTween();
+  }
+}
+
+let tweenStart = null;
+let tweenArrows = null; // {players:[{x1,y1,x2,y2,col}], ball:{x1,y1,x2,y2}|null, progress:0}
+function animateTween(ts){
+  if(!tweenStart) tweenStart = ts;
+  const elapsed = ts - tweenStart;
+  const t = Math.min(elapsed / tweenDuration, 1);
+  // ease-in-out cubic
+  const e = t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2,3)/2;
+
+  // Interpolate token positions
+  tweenFrom.tokens.forEach(from=>{
+    const to = tweenTo.tokens.find(x=>x.no===from.no && x.side===from.side);
+    const tok = tokens.find(x=>x.player.no===from.no && x.side===from.side);
+    if(tok && to){
+      tok.fx = from.fx + (to.fx - from.fx)*e;
+      tok.fy = from.fy + (to.fy - from.fy)*e;
+    }
+  });
+
+  // Interpolate ball
+  if(tweenFrom.ball && tweenTo.ball){
+    ball = {
+      fx: tweenFrom.ball.fx + (tweenTo.ball.fx - tweenFrom.ball.fx)*e,
+      fy: tweenFrom.ball.fy + (tweenTo.ball.fy - tweenFrom.ball.fy)*e,
+    };
+  } else {
+    ball = tweenTo.ball ? {...tweenTo.ball} : null;
+  }
+
+  // Fade drawings in during second half of tween
+  if(t > 0.5){
+    drawings = JSON.parse(JSON.stringify(tweenTo.drawings));
+  }
+
+  draw();
+
+  if(t < 1){
+    tweenStart = tweenStart;
+    playTween = requestAnimationFrame(ts2=>{tweenStart=tweenStart||ts2;animateTween(ts2);});
+  } else {
+    tweenStart = null;
+    updatePlayUI();
+    if(isPlaying) scheduleNextStep();
+  }
+}
+
+// Override animateTween to properly use timestamp
+function animateTween2(){
+  tweenStart = null;
+
+  // Build movement arrows from tweenFrom → tweenTo
+  tweenArrows = {
+    progress: 0,
+    players: tweenFrom.tokens.map(from=>{
+      const to = tweenTo.tokens.find(x=>x.no===from.no&&x.side===from.side);
+      if(!to) return null;
+      // Get team color for this token
+      const teamKey = from.side==='home'?homeTeam:awayTeam;
+      const col = (teamKey&&TEAMS[teamKey]) ? TEAMS[teamKey].color : '#ffffff';
+      return {x1:from.fx, y1:from.fy, x2:to.fx, y2:to.fy, col};
+    }).filter(Boolean),
+    ball: (()=>{
+      if(!tweenFrom.ball || !tweenTo.ball) return null;
+      // Check if any player moved with the ball (dribble) — if so, no pass arrow
+      const bx1=tweenFrom.ball.fx, by1=tweenFrom.ball.fy;
+      const bx2=tweenTo.ball.fx,   by2=tweenTo.ball.fy;
+      const threshold = 0.04; // fraction of canvas — if player tracks ball this closely it's a dribble
+      const isDribble = tweenFrom.tokens.some(from=>{
+        const to = tweenTo.tokens.find(x=>x.no===from.no&&x.side===from.side);
+        if(!to) return false;
+        // Player start near ball start AND player end near ball end
+        const startClose = Math.hypot(from.fx-bx1, from.fy-by1) < threshold;
+        const endClose   = Math.hypot(to.fx-bx2,   to.fy-by2)   < threshold;
+        return startClose && endClose;
+      });
+      if(isDribble) return null;
+      return {x1:bx1, y1:by1, x2:bx2, y2:by2};
+    })()
+  };
+
+  function step(ts){
+    if(!tweenStart) tweenStart = ts;
+    const elapsed = ts - tweenStart;
+    const t = Math.min(elapsed/tweenDuration, 1);
+    const e = t<0.5 ? 4*t*t*t : 1-Math.pow(-2*t+2,3)/2;
+    // Update arrow opacity with tween progress
+    if(tweenArrows) tweenArrows.progress = t;
+    tweenFrom.tokens.forEach(from=>{
+      const to=tweenTo.tokens.find(x=>x.no===from.no&&x.side===from.side);
+      const tok=tokens.find(x=>x.player.no===from.no&&x.side===from.side);
+      if(tok&&to){tok.fx=from.fx+(to.fx-from.fx)*e;tok.fy=from.fy+(to.fy-from.fy)*e;}
+    });
+    if(tweenFrom.ball&&tweenTo.ball){
+      ball={fx:tweenFrom.ball.fx+(tweenTo.ball.fx-tweenFrom.ball.fx)*e,fy:tweenFrom.ball.fy+(tweenTo.ball.fy-tweenFrom.ball.fy)*e};
+    } else { ball=tweenTo.ball?{...tweenTo.ball}:null; }
+    if(t>0.5) drawings=JSON.parse(JSON.stringify(tweenTo.drawings));
+    draw();
+    if(t<1){ playTween=requestAnimationFrame(step); }
+    else { tweenStart=null; tweenArrows=null; updatePlayUI(); if(isPlaying) scheduleNextStep(); }
+  }
+  playTween=requestAnimationFrame(step);
+}
+
+function scheduleNextStep(){
+  clearTimeout(playTimer);
+  const pauseMs = parseInt(document.getElementById('play-speed').value) * 0.4;
+  playTimer = setTimeout(()=>{
+    let next = currentStep + 1;
+    if(next >= playSteps.length) next = 0; // loop
+    currentStep = next;
+    if(playSteps.length > 0) doTweenTo(currentStep);
+  }, pauseMs);
+}
+
+function doTweenTo(stepIdx){
+  if(stepIdx < 0 || stepIdx >= playSteps.length) return;
+  const s = playSteps[stepIdx];
+  currentStep = stepIdx;
+  tweenFrom = {
+    tokens: tokens.map(t=>({no:t.player.no,side:t.side,fx:t.fx,fy:t.fy})),
+    ball: ball?{...ball}:null
+  };
+  tweenTo = {
+    tokens: s.tokens.map(st=>({no:st.playerNo,side:st.side,fx:st.fx,fy:st.fy})),
+    ball: s.ball?{...s.ball}:null,
+    drawings: s.drawings
+  };
+  tweenDuration = parseInt(document.getElementById('play-speed').value);
+  animateTween2();
+  updatePlayUI();
+}
+
+function startPlay(){
+  if(playSteps.length < 2){alert('Record at least 2 steps to play!');return;}
+  isPlaying = true;
+  document.getElementById('pbtn-play').classList.add('playing');
+  document.getElementById('pbtn-play').textContent = '⏹ Stop';
+  currentStep = 0;
+  doTweenTo(0);
+}
+
+function stopPlay(){
+  isPlaying = false;
+  clearTimeout(playTimer);
+  if(playTween){ cancelAnimationFrame(playTween); playTween=null; }
+  tweenStart=null; tweenArrows=null;
+  document.getElementById('pbtn-play').classList.remove('playing');
+  document.getElementById('pbtn-play').textContent = '▶ Play';
+}
+
+function updatePlayUI(){
+  const n = playSteps.length;
+  document.getElementById('step-counter').textContent = n===0 ? '0 steps' : `Step ${Math.max(0,currentStep)+1}/${n}`;
+  document.getElementById('pbtn-prev').disabled = currentStep <= 0;
+  document.getElementById('pbtn-next').disabled = currentStep >= n-1;
+
+  // Dots
+  const dots = document.getElementById('step-dots');
+  dots.innerHTML='';
+  for(let i=0;i<n;i++){
+    const d=document.createElement('div');
+    d.className='step-dot filled'+(i===currentStep?' active':'');
+    d.title=`Step ${i+1}`;
+    d.onclick=(()=>{const idx=i;return()=>{if(!isPlaying){doTweenTo(idx);};};})();
+    dots.appendChild(d);
+  }
+}
+
+// Ball drawing
+function drawBall(c, fx, fy, isDragging){
+  const cx2=fx*W, cy2=fy*H;
+  const r=Math.min(W,H)*0.022;
+  // Shadow
+  c.save();c.shadowColor='rgba(0,0,0,.6)';c.shadowBlur=isDragging?14:7;
+  c.beginPath();c.arc(cx2,cy2,r,0,Math.PI*2);c.fillStyle='#f5f5f5';c.fill();c.restore();
+  // Ball base
+  c.beginPath();c.arc(cx2,cy2,r,0,Math.PI*2);c.fillStyle='#f0f0f0';c.fill();
+  // Pentagon pattern
+  c.strokeStyle='#222';c.lineWidth=1;
+  // Draw simplified soccer ball lines
+  const segs=[
+    [0,-1],[0.951,-0.309],[0.588,0.809],[-0.588,0.809],[-0.951,-0.309]
+  ];
+  c.beginPath();
+  segs.forEach(([sx,sy],i)=>{
+    const bx=cx2+sx*r*0.55, by=cy2+sy*r*0.55;
+    const nx=cx2+sx*r, ny=cy2+sy*r;
+    if(i===0)c.moveTo(bx,by);else c.lineTo(bx,by);
+    c.moveTo(cx2,cy2);c.lineTo(nx,ny);
+    c.moveTo(bx,by);
+  });
+  c.stroke();
+  // Center pentagon
+  c.beginPath();
+  segs.forEach(([sx,sy],i)=>{
+    const bx=cx2+sx*r*0.55, by=cy2+sy*r*0.55;
+    if(i===0)c.moveTo(bx,by);else c.lineTo(bx,by);
+  });
+  c.closePath();c.fillStyle='#333';c.fill();
+  // Ring
+  c.beginPath();c.arc(cx2,cy2,r,0,Math.PI*2);
+  c.strokeStyle=isDragging?'#f0c040':'rgba(0,0,0,.4)';c.lineWidth=isDragging?2.5:1.5;c.stroke();
+}
+
+// Draw movement arrows during tween
+function drawTweenArrows(c, alpha){
+  if(!tweenArrows) return;
+  c.save();
+  c.globalAlpha = alpha;
+  c.lineCap = 'round'; c.lineJoin = 'round';
+
+  const minDist = 8; // don't draw arrow for tiny movements
+
+  // Player movement arrows — solid lines per team color
+  tweenArrows.players.forEach(a=>{
+    const dx=(a.x2-a.x1)*W, dy=(a.y2-a.y1)*H;
+    if(Math.hypot(dx,dy) < minDist) return;
+    const x1=a.x1*W, y1=a.y1*H, x2=a.x2*W, y2=a.y2*H;
+    c.strokeStyle = a.col;
+    c.fillStyle   = a.col;
+    c.lineWidth   = 2;
+    c.setLineDash([]);
+    c.beginPath(); c.moveTo(x1,y1); c.lineTo(x2,y2); c.stroke();
+    // Arrowhead
+    const angle=Math.atan2(y2-y1,x2-x1), len=10, sp=0.42;
+    c.beginPath();
+    c.moveTo(x2,y2);
+    c.lineTo(x2-len*Math.cos(angle-sp), y2-len*Math.sin(angle-sp));
+    c.lineTo(x2-len*Math.cos(angle+sp), y2-len*Math.sin(angle+sp));
+    c.closePath(); c.fill();
+  });
+
+  // Ball movement arrow — dashed white line
+  if(tweenArrows.ball){
+    const a=tweenArrows.ball;
+    const dx=(a.x2-a.x1)*W, dy=(a.y2-a.y1)*H;
+    if(Math.hypot(dx,dy) >= minDist){
+      const x1=a.x1*W, y1=a.y1*H, x2=a.x2*W, y2=a.y2*H;
+      c.strokeStyle='#fff'; c.fillStyle='#fff';
+      c.lineWidth=2.5;
+      c.setLineDash([7,5]);
+      c.beginPath(); c.moveTo(x1,y1); c.lineTo(x2,y2); c.stroke();
+      c.setLineDash([]);
+      // Arrowhead (solid even on dashed line)
+      const angle=Math.atan2(y2-y1,x2-x1), len=11, sp=0.42;
+      c.beginPath();
+      c.moveTo(x2,y2);
+      c.lineTo(x2-len*Math.cos(angle-sp), y2-len*Math.sin(angle-sp));
+      c.lineTo(x2-len*Math.cos(angle+sp), y2-len*Math.sin(angle+sp));
+      c.closePath(); c.fill();
+    }
+  }
+
+  c.globalAlpha=1; c.setLineDash([]); c.restore();
+}
+
+// Patch draw() to also draw ball and handle play mode
+const _origDraw = draw;
+draw = function(preview){
+  if(!W||!H)return;
+  drawPitch(ctx);
+  drawings.forEach(s=>renderShape(ctx,s));
+  if(preview)renderShape(ctx,preview);
+  tokens.forEach((t,i)=>{
+    const px=t.fx*W, py=t.fy*H;
+    t.role==='sub'
+      ? drawSubToken(ctx,t.player,px,py,i===dragIdx,t.side)
+      : drawStarterToken(ctx,t.player,px,py,i===dragIdx,t.side);
+  });
+  if(ball) drawBall(ctx, ball.fx, ball.fy, ballDrag);
+  // Draw movement arrows during tween — fade in with progress
+  if(tweenArrows && tweenArrows.progress > 0){
+    drawTweenArrows(ctx, Math.min(1, tweenArrows.progress * 2.5));
+  }
+};
+
+// Patch canvas events to handle ball and play mode tool
+const _ballR = ()=>Math.min(W,H)*0.022;
+
+// Override mousedown to handle ball + play-mode ball placement
+const origMousedown = cv.onmousedown;
+
+cv.addEventListener('mousedown', e=>{
+  if(e._handled) return;
+  // Ball tool: click to place ball
+  if(tool==='ball'){
+    const{x,y}=ptXY(e);
+    ball={fx:x/W, fy:y/H};
+    ballDrag=true;
+    draw();
+    return;
+  }
+  // Check ball drag (select mode)
+  if(tool==='select'&&ball&&!ratingMode){
+    const{x,y}=ptXY(e);
+    const bx=ball.fx*W, by=ball.fy*H;
+    if(Math.hypot(x-bx,y-by)<_ballR()+4){
+      ballDrag=true;
+      draw();
+      return;
+    }
+  }
+}, true); // capture phase so it runs before other handlers
+
+cv.addEventListener('mousemove', e=>{
+  if(ballDrag){
+    const{x,y}=ptXY(e);
+    ball={fx:Math.max(0.01,Math.min(0.99,x/W)),fy:Math.max(0.01,Math.min(0.99,y/H))};
+    draw();
+  }
+});
+
+cv.addEventListener('mouseup', e=>{
+  if(ballDrag){ballDrag=false;draw();}
+});
+
+cv.addEventListener('touchstart',e=>{
+  if(tool==='ball'){
+    const t2=e.touches[0],{x,y}=ptXY({clientX:t2.clientX,clientY:t2.clientY});
+    ball={fx:x/W,fy:y/H};ballDrag=true;draw();return;
+  }
+  if(tool==='select'&&ball&&!ratingMode){
+    const t2=e.touches[0],{x,y}=ptXY({clientX:t2.clientX,clientY:t2.clientY});
+    if(Math.hypot(x-ball.fx*W,y-ball.fy*H)<_ballR()+8){ballDrag=true;draw();return;}
+  }
+},{capture:true,passive:false});
+
+cv.addEventListener('touchmove',e=>{
+  if(ballDrag){e.preventDefault();const t2=e.touches[0],{x,y}=ptXY({clientX:t2.clientX,clientY:t2.clientY});ball={fx:Math.max(0.01,Math.min(0.99,x/W)),fy:Math.max(0.01,Math.min(0.99,y/H))};draw();}
+},{passive:false});
+
+cv.addEventListener('touchend',e=>{if(ballDrag){ballDrag=false;draw();}});
+
+// Right-click ball to remove
+cv.addEventListener('contextmenu',e=>{
+  if(ball){const{x,y}=ptXY(e);if(Math.hypot(x-ball.fx*W,y-ball.fy*H)<_ballR()+4){e.stopImmediatePropagation();e.preventDefault();ball=null;draw();return;}}
+},{capture:true});
+
+// Ball tool button
+// Wire up buttons safely
+function wireBtn(id, fn){const el=document.getElementById(id);if(el)el.onclick=fn;else console.warn('Missing:',id);}
+
+wireBtn('tool-ball',()=>{
+  const allTools=['select','arrow','darrow','curve','line','circle','freehand'];
+  allTools.forEach(id=>{const b=document.getElementById('tool-'+id);if(b)b.classList.remove('active');});
+  const tb=document.getElementById('tool-ball');
+  if(tb)tb.classList.toggle('active', tool!=='ball');
+  if(tool==='ball'){tool='select';const ts=document.getElementById('tool-select');if(ts)ts.classList.add('active');cv.style.cursor='default';}
+  else{tool='ball';cv.style.cursor='crosshair';}
+});
+
+wireBtn('btn-play-mode',()=>{ if(playMode) exitPlayMode(); else enterPlayMode(); });
+wireBtn('pbtn-record', captureStep);
+wireBtn('pbtn-play',  ()=>{ if(isPlaying) stopPlay(); else startPlay(); });
+wireBtn('pbtn-prev',  ()=>{ if(!isPlaying&&currentStep>0) doTweenTo(currentStep-1); });
+wireBtn('pbtn-next',  ()=>{ if(!isPlaying&&currentStep<playSteps.length-1) doTweenTo(currentStep+1); });
+wireBtn('pbtn-del-step',()=>{
+  if(currentStep<0||playSteps.length===0)return;
+  playSteps.splice(currentStep,1);
+  currentStep=Math.min(currentStep,playSteps.length-1);
+  if(playSteps.length>0) restoreStep(currentStep,true); else updatePlayUI();
+});
+
+// GIF Export using gif.js
+document.getElementById('pbtn-gif').onclick=async()=>{
+  if(playSteps.length<2){alert('Record at least 2 steps first!');return;}
+  const btn=document.getElementById('pbtn-gif');
+  btn.textContent='⏳ Building...';btn.disabled=true;
+
+  // Load gif.js dynamically
+  if(!window.GIF){
+    await new Promise((res,rej)=>{
+      const s=document.createElement('script');
+      s.src='https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.js';
+      s.onload=res;s.onerror=rej;document.head.appendChild(s);
+    });
+  }
+
+  const fps=12, spd=parseInt(document.getElementById('play-speed').value);
+  const frameDur=Math.round(1000/fps);
+  const framesPerStep=Math.round(spd/1000*fps);
+  const pauseFrames=Math.max(2,Math.round(framesPerStep*0.3));
+
+  const gif=new GIF({workers:2,quality:8,width:W,height:H,workerScript:'https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.worker.js'});
+
+  // Render frames for each step transition
+  for(let si=0;si<playSteps.length;si++){
+    const from=si===0?playSteps[playSteps.length-1]:playSteps[si-1];
+    const to=playSteps[si];
+
+    for(let f=0;f<=framesPerStep;f++){
+      const t=f/framesPerStep;
+      const e=t<0.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
+
+      // Snap token positions to interpolated
+      to.tokens.forEach(st=>{
+        const fromT=from.tokens.find(x=>x.playerNo===st.playerNo&&x.side===st.side)||st;
+        const tok=tokens.find(x=>x.player.no===st.playerNo&&x.side===st.side);
+        if(tok){tok.fx=fromT.fx+(st.fx-fromT.fx)*e;tok.fy=fromT.fy+(st.fy-fromT.fy)*e;}
+      });
+
+      // Ball interpolation
+      if(from.ball&&to.ball){
+        ball={fx:from.ball.fx+(to.ball.fx-from.ball.fx)*e,fy:from.ball.fy+(to.ball.fy-from.ball.fy)*e};
+      } else { ball=to.ball?{...to.ball}:null; }
+
+      // Drawings fade in second half
+      drawings=t>0.5?JSON.parse(JSON.stringify(to.drawings)):JSON.parse(JSON.stringify(from.drawings));
+
+      draw();
+      gif.addFrame(cv,{copy:true,delay:frameDur});
+    }
+
+    // Pause on each step
+    draw();
+    for(let p=0;p<pauseFrames;p++) gif.addFrame(cv,{copy:true,delay:frameDur*2});
+  }
+
+  gif.on('finished',blob=>{
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');a.href=url;a.download='WC2026_Play.gif';a.click();
+    btn.textContent='🎬 Export GIF';btn.disabled=false;
+    // Restore last step
+    if(playSteps.length>0) restoreStep(currentStep,true);
+  });
+  gif.render();
+};
+
+// Update serialize/deserialize to include ball and playSteps
+const _origSerialize = serializeState;
+serializeState = function(){
+  const base=_origSerialize();
+  base.ball = ball ? {...ball} : null;
+  base.playSteps = playSteps.length ? playSteps : [];
+  return base;
+};
+
+const _origDeserialize = deserializeState;
+deserializeState = function(state){
+  _origDeserialize(state);
+  ball = state.ball ? {...state.ball} : null;
+  playSteps = state.playSteps || [];
+  currentStep = playSteps.length-1;
+  if(playMode) updatePlayUI();
+  draw();
+};
 
 // ── INIT ──
 window.addEventListener('resize',resize);
