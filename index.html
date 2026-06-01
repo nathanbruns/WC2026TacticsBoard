@@ -32,6 +32,9 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:#fff;font-famil
 .save-btn:hover{background:#27ae60}
 .load-btn{font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase;padding:5px 10px;border-radius:4px;border:1px solid rgba(79,195,247,.4);background:rgba(79,195,247,.1);color:var(--accent);cursor:pointer;white-space:nowrap;transition:.12s}
 .load-btn:hover{background:rgba(79,195,247,.2);border-color:var(--accent)}
+.rate-btn{font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase;padding:5px 10px;border-radius:4px;border:1.5px solid rgba(240,192,64,.4);background:transparent;color:var(--gold);cursor:pointer;white-space:nowrap;transition:.12s}
+.rate-btn:hover{background:rgba(240,192,64,.12);border-color:var(--gold)}
+.rate-btn.active{background:rgba(240,192,64,.2);border-color:var(--gold);color:#fff}
 /* SAVE MODAL */
 .smo{position:fixed;z-index:999;inset:0;background:rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center}
 .smo-box{background:#12121e;border:1.5px solid var(--accent);border-radius:12px;width:480px;max-width:95vw;max-height:80vh;display:flex;flex-direction:column;overflow:hidden}
@@ -131,6 +134,19 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:#fff;font-famil
   <div class="rotate-msg">Rotate Your Device</div>
   <div class="rotate-sub">This app works best in landscape mode</div>
 </div>
+
+<nav style="background:linear-gradient(90deg,#3C3B6E,#1a1a3e);border-bottom:2px solid #B22234;display:flex;align-items:center;font-family:'Barlow Condensed',sans-serif">
+  <div style="display:flex;align-items:center;gap:8px;padding:8px 14px;border-right:1px solid rgba(255,255,255,.1)">
+    <div style="width:26px;height:17px;position:relative;border-radius:2px;overflow:hidden;border:1px solid rgba(255,255,255,.3);flex-shrink:0">
+      <div style="height:5.7px;background:#B22234;width:100%"></div><div style="height:5.7px;background:#fff;width:100%"></div><div style="height:5.7px;background:#B22234;width:100%"></div>
+      <div style="position:absolute;top:0;left:0;width:38%;height:66%;background:#3C3B6E"></div>
+    </div>
+    <span style="font-size:14px;font-weight:900;letter-spacing:1.5px;text-transform:uppercase;white-space:nowrap"><span style="color:#B22234">2026</span> FIFA World Cup</span>
+  </div>
+  <a href="index.html" style="padding:10px 16px;font-size:12px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:#4fc3f7;text-decoration:none;border-bottom:3px solid #4fc3f7;white-space:nowrap">⚽ Tactical Board</a>
+  <a href="groups.html" style="padding:10px 16px;font-size:12px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:#8899aa;text-decoration:none;border-bottom:3px solid transparent;white-space:nowrap;transition:.12s" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#8899aa'">📊 Group Stage</a>
+  <a href="bracket.html" style="padding:10px 16px;font-size:12px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:#8899aa;text-decoration:none;border-bottom:3px solid transparent;white-space:nowrap;transition:.12s" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#8899aa'">🏆 Bracket</a>
+</nav>
 <div class="app">
 <div class="hdr">
   <div class="hdr-l">
@@ -152,6 +168,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:#fff;font-famil
     </button>
   </div>
   <div class="hdr-r">
+    <button class="rate-btn" id="btn-rate">⭐ Rate Players</button>
     <button class="clr-btn" id="btn-clear-all">Clear All</button>
     <button class="save-btn" id="btn-save">💾 Save</button>
     <button class="load-btn" id="btn-load">📂 Saves</button>
@@ -299,6 +316,31 @@ function drawArrowHead(c,x1,y1,x2,y2,w){
   c.beginPath();c.moveTo(x2,y2);c.lineTo(x2-len*Math.cos(angle-sp),y2-len*Math.sin(angle-sp));c.lineTo(x2-len*Math.cos(angle+sp),y2-len*Math.sin(angle+sp));c.closePath();c.fill();c.restore();
 }
 
+function ratingColor(r){
+  if(r===null||r===undefined)return null;
+  if(r>=9)return'#a855f7';   // purple — outstanding
+  if(r>=7.5)return'#22c55e'; // green — good
+  if(r>=6)return'#f0c040';   // gold — decent
+  if(r>=5)return'#fb923c';   // orange — poor
+  return'#ef4444';            // red — awful
+}
+
+function drawRatingBadge(c,rating,cx2,cy2,r){
+  if(rating===null||rating===undefined)return;
+  const col=ratingColor(rating);
+  const bw=Math.max(24,Math.round(r*0.88));
+  const bh=Math.max(13,Math.round(r*0.48));
+  const bx=cx2+r*0.3; // right side of name pill
+  const by=cy2+r+2+Math.max(8,Math.round(r*0.52))+2; // just below name pill
+  c.save();
+  c.fillStyle=col;
+  c.beginPath();c.roundRect(bx-bw/2,by,bw,bh,3);c.fill();
+  c.fillStyle='#000';c.font=`900 ${Math.round(bh*0.75)}px 'Barlow Condensed',Arial`;
+  c.textAlign='center';c.textBaseline='middle';
+  c.fillText(rating%1===0?rating+'.0':rating,bx,by+bh/2);
+  c.restore();
+}
+
 function teamColor(side){
   if(side==='home'&&homeTeam&&TEAMS[homeTeam])return TEAMS[homeTeam].color;
   if(side==='away'&&awayTeam&&TEAMS[awayTeam])return TEAMS[awayTeam].color;
@@ -319,6 +361,14 @@ function drawStarterToken(c,p,cx2,cy2,dragging,side){
   c.font=`700 ${ns}px 'Barlow Condensed',Arial`;const tw=c.measureText(p.s).width;
   c.fillStyle='rgba(0,0,0,.7)';c.beginPath();c.roundRect(cx2-tw/2-5,cy2+r+2,tw+10,ns+5,3);c.fill();
   c.fillStyle='#fff';c.textAlign='center';c.textBaseline='top';c.fillText(p.s,cx2,cy2+r+4);
+  // Rating badge
+  const rating=p.rating;
+  if(rating!==null&&rating!==undefined)drawRatingBadge(c,rating,cx2,cy2,r);
+  // Rating mode highlight ring
+  if(ratingMode){
+    c.beginPath();c.arc(cx2,cy2,r+4,0,Math.PI*2);
+    c.strokeStyle='rgba(240,192,64,0.5)';c.lineWidth=1.5;c.setLineDash([3,3]);c.stroke();c.setLineDash([]);
+  }
 }
 function drawSubToken(c,p,cx2,cy2,dragging,side){
   const r=Math.min(W,H)*0.022,ns=Math.max(8,Math.round(r*0.78));
@@ -327,6 +377,8 @@ function drawSubToken(c,p,cx2,cy2,dragging,side){
   c.shadowColor='rgba(0,0,0,.8)';c.shadowBlur=4;
   c.fillStyle=dragging?'#f0c040':'#fff';
   c.textAlign='center';c.textBaseline='middle';c.fillText(p.s,cx2,cy2);c.restore();
+  // Rating badge for subs
+  if(p.rating!==null&&p.rating!==undefined){const rr=Math.min(W,H)*0.022;drawRatingBadge(c,p.rating,cx2,cy2+rr*0.5,rr*0.7);}
 }
 
 // ── CANVAS EVENTS ──
@@ -345,7 +397,13 @@ function buildPreview(x,y){
 
 cv.addEventListener('mousedown',e=>{
   const{x,y}=ptXY(e);
-  if(tool==='select'){for(let i=tokens.length-1;i>=0;i--){if(dist(x,y,tokens[i].x,tokens[i].y)<hitR(tokens[i])){dragIdx=i;dox=x-tokens[i].x;doy=y-tokens[i].y;cv.style.cursor='grabbing';return;}}return;}
+  if(tool==='select'){
+    // Rating mode: click opens rating popup, no drag
+    if(ratingMode){
+      for(let i=tokens.length-1;i>=0;i--){if(dist(x,y,tokens[i].x,tokens[i].y)<hitR(tokens[i])+6){openRatingPopup(i,x,y);return;}}
+      return;
+    }
+    for(let i=tokens.length-1;i>=0;i--){if(dist(x,y,tokens[i].x,tokens[i].y)<hitR(tokens[i])){dragIdx=i;dox=x-tokens[i].x;doy=y-tokens[i].y;cv.style.cursor='grabbing';return;}}return;}
   if(tool==='freehand'){isDrawing=true;freehandPts=[{x,y}];return;}
   isDrawing=true;drawStart={x,y};
 });
@@ -353,7 +411,7 @@ cv.addEventListener('mousemove',e=>{
   const{x,y}=ptXY(e);
   if(tool==='select'){
     if(dragIdx!==null){tokens[dragIdx].x=Math.max(R(),Math.min(W-R(),x-dox));tokens[dragIdx].y=Math.max(R(),Math.min(H-R(),y-doy));draw();}
-    else cv.style.cursor=tokens.some(t=>dist(x,y,t.x,t.y)<hitR(t))?'grab':'default';
+    else cv.style.cursor=ratingMode?(tokens.some(t=>dist(x,y,t.x,t.y)<hitR(t))?'pointer':'default'):tokens.some(t=>dist(x,y,t.x,t.y)<hitR(t))?'grab':'default';
     return;
   }
   cv.style.cursor='crosshair';if(!isDrawing)return;
@@ -377,7 +435,9 @@ cv.addEventListener('contextmenu',e=>{
   if(drawings.length){drawings.pop();draw();}
 });
 cv.addEventListener('touchstart',e=>{e.preventDefault();const t=e.touches[0],{x,y}=ptXY({clientX:t.clientX,clientY:t.clientY});
-  if(tool==='select'){for(let i=tokens.length-1;i>=0;i--){if(dist(x,y,tokens[i].x,tokens[i].y)<hitR(tokens[i])+8){dragIdx=i;dox=x-tokens[i].x;doy=y-tokens[i].y;return;}}}
+  if(tool==='select'){
+    if(ratingMode){for(let i=tokens.length-1;i>=0;i--){if(dist(x,y,tokens[i].x,tokens[i].y)<hitR(tokens[i])+10){openRatingPopup(i,x,y);return;}}return;}
+    for(let i=tokens.length-1;i>=0;i--){if(dist(x,y,tokens[i].x,tokens[i].y)<hitR(tokens[i])+8){dragIdx=i;dox=x-tokens[i].x;doy=y-tokens[i].y;return;}}}
   else{isDrawing=true;if(tool==='freehand')freehandPts=[{x,y}];else drawStart={x,y};}
 },{passive:false});
 cv.addEventListener('touchmove',e=>{e.preventDefault();const t=e.touches[0],{x,y}=ptXY({clientX:t.clientX,clientY:t.clientY});
@@ -421,6 +481,100 @@ document.querySelectorAll('[data-w]').forEach(el=>{
 document.getElementById('btn-undo').onclick=()=>{drawings.pop();draw();};
 document.getElementById('btn-clear-draw').onclick=()=>{if(confirm('Clear all drawings?')){drawings=[];draw();}};
 document.getElementById('btn-clear-all').onclick=()=>{if(confirm('Clear everything?')){tokens=[];drawings=[];draw();renderPanels();}};
+
+// ── RATING MODE ──
+document.getElementById('btn-rate').onclick=function(){
+  ratingMode=!ratingMode;
+  this.classList.toggle('active',ratingMode);
+  this.textContent=ratingMode?'✓ Rating Mode':'⭐ Rate Players';
+  cv.style.cursor=ratingMode?'pointer':'default';
+  if(ratingMode)setTool('select');
+  draw();
+};
+
+function openRatingPopup(tokenIdx,canvasX,canvasY){
+  const token=tokens[tokenIdx];
+  const p=token.player;
+  const existing=p.rating;
+
+  const ov=document.getElementById('mo');ov.innerHTML='';ov.style.display='flex';
+  const box=document.createElement('div');
+  box.style.cssText='background:#1a1a2e;border:1.5px solid var(--gold);border-radius:10px;width:280px;overflow:hidden;font-family:Barlow Condensed,sans-serif';
+
+  // Header
+  const hdr=document.createElement('div');
+  hdr.style.cssText='padding:11px 14px;border-bottom:1px solid rgba(255,255,255,.1);display:flex;align-items:center;justify-content:space-between;background:rgba(240,192,64,.08)';
+  const playerInfo=document.createElement('div');
+  playerInfo.innerHTML=`<div style="font-size:13px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:#fff">Rate Player</div><div style="font-size:12px;color:var(--gold);font-weight:700;margin-top:1px">#${p.no} ${p.name}</div>`;
+  const cls=document.createElement('button');cls.textContent='×';cls.style.cssText='background:transparent;border:none;color:#8899aa;font-size:18px;cursor:pointer;line-height:1;padding:0';cls.onclick=()=>ov.style.display='none';
+  hdr.appendChild(playerInfo);hdr.appendChild(cls);box.appendChild(hdr);
+
+  // Rating display + input
+  const body=document.createElement('div');body.style.cssText='padding:16px 14px;display:flex;flex-direction:column;gap:12px';
+
+  // Big rating display
+  const dispWrap=document.createElement('div');dispWrap.style.cssText='display:flex;align-items:center;justify-content:center;gap:12px';
+  const disp=document.createElement('div');
+  disp.style.cssText='font-size:52px;font-weight:900;text-align:center;line-height:1;min-width:80px;transition:.1s';
+  const updateDisp=(val)=>{
+    const col=ratingColor(val);
+    disp.textContent=val===null?'—':(val%1===0?val+'.0':val);
+    disp.style.color=col||'var(--muted)';
+  };
+  updateDisp(existing??null);
+  dispWrap.appendChild(disp);
+  body.appendChild(dispWrap);
+
+  // Quick preset buttons — common ratings
+  const presets=[5.0,5.5,6.0,6.5,7.0,7.5,8.0,8.5,9.0,9.5,10.0];
+  const presetWrap=document.createElement('div');presetWrap.style.cssText='display:grid;grid-template-columns:repeat(6,1fr);gap:4px';
+  presets.forEach(v=>{
+    const btn=document.createElement('button');
+    const col=ratingColor(v);
+    btn.style.cssText=`padding:6px 2px;border-radius:4px;border:1.5px solid ${col};background:${col}22;color:${col};font-family:inherit;font-size:12px;font-weight:900;cursor:pointer;transition:.1s`;
+    btn.textContent=v%1===0?v+'.0':v;
+    if(existing===v)btn.style.background=col+'55';
+    btn.onclick=()=>{
+      p.rating=v;
+      updateDisp(v);
+      // Flash all buttons to show selection
+      presetWrap.querySelectorAll('button').forEach(b=>b.style.background=col+'22');
+      btn.style.background=col+'55';
+      draw();
+    };
+    presetWrap.appendChild(btn);
+  });
+  body.appendChild(presetWrap);
+
+  // Manual input
+  const manualRow=document.createElement('div');manualRow.style.cssText='display:flex;align-items:center;gap:8px';
+  const manLabel=document.createElement('div');manLabel.style.cssText='font-size:10px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--muted);flex-shrink:0';manLabel.textContent='Custom';
+  const manInp=document.createElement('input');manInp.type='number';manInp.min=1;manInp.max=10;manInp.step=0.5;
+  manInp.placeholder='e.g. 7.5';
+  manInp.value=existing!=null?existing:'';
+  manInp.style.cssText='flex:1;padding:6px 10px;background:rgba(255,255,255,.07);border:1.5px solid rgba(255,255,255,.15);border-radius:5px;color:#fff;font-family:inherit;font-size:14px;font-weight:900;outline:none';
+  manInp.onfocus=()=>manInp.style.borderColor='var(--gold)';
+  manInp.onblur=()=>manInp.style.borderColor='rgba(255,255,255,.15)';
+  manInp.oninput=()=>{
+    const v=parseFloat(manInp.value);
+    if(!isNaN(v)&&v>=1&&v<=10){p.rating=Math.round(v*2)/2;updateDisp(p.rating);draw();}
+  };
+  manualRow.appendChild(manLabel);manualRow.appendChild(manInp);
+  body.appendChild(manualRow);
+
+  // Clear rating
+  const clrBtn=document.createElement('button');
+  clrBtn.style.cssText='width:100%;padding:7px;border-radius:5px;border:1px solid rgba(255,255,255,.15);background:transparent;color:var(--muted);font-family:inherit;font-size:11px;font-weight:700;text-transform:uppercase;cursor:pointer;letter-spacing:.5px';
+  clrBtn.textContent='Clear Rating';
+  clrBtn.onmouseover=()=>{clrBtn.style.background='rgba(255,255,255,.06)';clrBtn.style.color='#fff';};
+  clrBtn.onmouseout=()=>{clrBtn.style.background='transparent';clrBtn.style.color='var(--muted)';};
+  clrBtn.onclick=()=>{p.rating=undefined;ov.style.display='none';draw();};
+  body.appendChild(clrBtn);
+
+  box.appendChild(body);ov.appendChild(box);
+  ov.onclick=e=>{if(e.target===ov)ov.style.display='none';};
+  setTimeout(()=>manInp.focus(),100);
+}
 
 // ── PANELS ──
 function onField(no,side){return tokens.some(t=>t.player.no===no&&t.side===side);}
@@ -562,7 +716,8 @@ function serializeState(){
       x: Math.round(t.x*100)/100,
       y: Math.round(t.y*100)/100,
       role: t.role,
-      side: t.side
+      side: t.side,
+      rating: t.player.rating ?? null
     })),
     drawings
   };
@@ -578,6 +733,7 @@ function deserializeState(state){
     if(!teamKey||!TEAMS[teamKey]) return;
     const player = TEAMS[teamKey].players.find(p=>p.no===t.playerNo);
     if(!player) return;
+    if(t.rating!=null) player.rating=t.rating; else delete player.rating;
     tokens.push({ player, x:t.x, y:t.y, role:t.role, side:t.side });
   });
   updateTeamButtons();
@@ -670,11 +826,12 @@ function buildSavesList(){
     const d = new Date(save.date);
     const st = save.state;
     const pCount = (st.tokens||[]).length;
+    const rCount = (st.tokens||[]).filter(t=>t.rating!=null).length;
     const dCount = (st.drawings||[]).length;
     const home = st.homeTeam||'?'; const away = st.awayTeam||'?';
     const homeFlag = TEAMS[home]?TEAMS[home].flag:'🏠';
     const awayFlag = TEAMS[away]?TEAMS[away].flag:'🌍';
-    meta.textContent = `${homeFlag} ${home} vs ${awayFlag} ${away}  ·  ${pCount} players  ·  ${dCount} drawings  ·  ${d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}`;
+    meta.textContent = `${homeFlag} ${home} vs ${awayFlag} ${away}  ·  ${pCount} players${rCount>0?' · '+rCount+' rated':''}  ·  ${dCount} drawings  ·  ${d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}`;
     info.appendChild(nm); info.appendChild(meta);
 
     const btns = document.createElement('div'); btns.className='save-item-btns';
