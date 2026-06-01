@@ -984,6 +984,123 @@ document.getElementById('btn-save').onclick=()=>{
 document.getElementById('btn-load').onclick=()=>openSaveModal();
 
 
+
+// ── INLINE GIF ENCODER (no workers, no CDN, works everywhere) ──
+// Based on Animated_GIF / jsgif encoder
+const GIFEncoder = (function(){
+  function ByteArray(){this.bin=[];}
+  ByteArray.prototype.getData=function(){return this.bin;};
+  ByteArray.prototype.writeByte=function(b){this.bin.push(b&0xFF);};
+  ByteArray.prototype.writeShort=function(n){this.writeByte(n&0xFF);this.writeByte((n>>8)&0xFF);};
+  ByteArray.prototype.writeString=function(s){for(var i=0;i<s.length;i++)this.writeByte(s.charCodeAt(i));};
+  ByteArray.prototype.writeBytes=function(arr){for(var i=0;i<arr.length;i++)this.writeByte(arr[i]);};
+
+  // NeuQuant color quantizer
+  function NeuQuant(pixels,samplefac){
+    var netsize=256,prime1=499,prime2=491,prime3=487,prime4=503;
+    var minpicturepixels=250,maxnetpos=netsize-1,netbiasshift=4,ncycles=100;
+    var intbiasshift=16,intbias=1<<intbiasshift,gammashift=10,beta=intbias>>10,betagamma=intbias<<(gammashift-10);
+    var initrad=netsize>>3,radiusbiasshift=6,radiusbias=1<<radiusbiasshift,initradius=initrad*radiusbias;
+    var radiusdec=30,alphabiasshift=10,initalpha=1<<alphabiasshift;
+    var radbiasshift=8,radbias=1<<radbiasshift,alpharadbshift=alphabiasshift+radbiasshift,alpharadbias=1<<alpharadbshift;
+    var network=[],netindex=new Int32Array(256),bias=new Int32Array(netsize),freq=new Int32Array(netsize),radpower=new Int32Array(netsize>>3);
+    for(var i=0;i<netsize;i++){var v=(i<<(netbiasshift+8))/netsize;network[i]=new Float64Array([v,v,v,0]);freq[i]=intbias/netsize;bias[i]=0;}
+    function colormap(){var map=[];var index=new Int32Array(netsize);for(var i=0;i<netsize;i++)index[network[i][3]]=i;var k=0;for(var l=0;l<netsize;l++){var j=index[l];map[k++]=network[j][0];map[k++]=network[j][1];map[k++]=network[j][2];}return map;}
+    function inxbuild(){var previouscol=0,startpos=0;for(var i=0;i<netsize;i++){var smallpos=i,smallval=network[i][1];for(var j=i+1;j<netsize;j++){if(network[j][1]<smallval){smallpos=j;smallval=network[j][1];}}var p=network[smallpos];if(i!=smallpos){var j2=p[0];p[0]=network[i][0];network[i][0]=j2;j2=p[1];p[1]=network[i][1];network[i][1]=j2;j2=p[2];p[2]=network[i][2];network[i][2]=j2;j2=p[3];p[3]=network[i][3];network[i][3]=j2;}if(smallval!=previouscol){netindex[previouscol]=(startpos+i)>>1;for(var j3=previouscol+1;j3<smallval;j3++)netindex[j3]=i;previouscol=smallval;startpos=i;}}netindex[previouscol]=(startpos+maxnetpos)>>1;for(var k2=previouscol+1;k2<256;k2++)netindex[k2]=maxnetpos;}
+    function contest(b,g,r){var bestd=~(1<<31),bestbiasd=bestd,bestpos=-1,bestbiaspos=-1;for(var i=0;i<netsize;i++){var n=network[i];var dist=Math.abs(n[0]-b)+Math.abs(n[1]-g)+Math.abs(n[2]-r);if(dist<bestd){bestd=dist;bestpos=i;}var biasdist=dist-(bias[i]>>intbiasshift-netbiasshift);if(biasdist<bestbiasd){bestbiasd=biasdist;bestbiaspos=i;}freq[i]-=freq[i]>>10;bias[i]+=bias[i]^(1<<(alphabiasshift+netbiasshift-10));}freq[bestpos]+=beta;bias[bestpos]-=betagamma;return bestbiaspos;}
+    function altersingle(alpha,i,b,g,r){network[i][0]-=(alpha*(network[i][0]-b))/initalpha;network[i][1]-=(alpha*(network[i][1]-g))/initalpha;network[i][2]-=(alpha*(network[i][2]-r))/initalpha;}
+    function alterneigh(radius,i,b,g,r){var lo=Math.abs(i-radius),hi=Math.min(i+radius,netsize);var j=i+1,k=i-1,m=1;while(j<hi||k>lo){var a=radpower[m++];if(j<hi)altersingle(a,j++,b,g,r);if(k>lo)altersingle(a,k--,b,g,r);}}
+    this.process=function(){var samplepixels=Math.max(minpicturepixels,~~(pixels.length/(4*samplefac)));var delta=Math.max(1,~~(samplepixels/ncycles));var alpha=initalpha,radius=initradius;var rad=radius>>radiusbiasshift;for(var i=0;i<rad;i++)radpower[i]=alpha*(((rad*rad-i*i)*radbias)/(rad*rad));var step;if(pixels.length<prime4*4)step=4;else if(pixels.length%prime1!=0)step=prime1*4;else if(pixels.length%prime2!=0)step=prime2*4;else if(pixels.length%prime3!=0)step=prime3*4;else step=prime4*4;var pix=0;for(var i2=0;i2<samplepixels;){var b=pixels[pix]&0xFF,g=pixels[pix+1]&0xFF,r=pixels[pix+2]&0xFF;var j=contest(b,g,r);altersingle(alpha,j,b,g,r);if(rad)alterneigh(rad,j,b,g,r);pix+=step;if(pix>=pixels.length-3)pix-=pixels.length-4;i2++;if(i2%delta==0){alpha-=alpha/30;radius-=radius/30;rad=radius>>radiusbiasshift;if(rad<=1)rad=0;for(var k2=0;k2<rad;k2++)radpower[k2]=alpha*(((rad*rad-k2*k2)*radbias)/(rad*rad));}}inxbuild();return colormap();};
+    this.map=function(b,g,r){var bestd=1e9,best=-1,i=netindex[g];var j=i-1;while(i<netsize||j>=0){if(i<netsize){var n=network[i];var dist=Math.abs(n[1]-g);if(dist>=bestd)i=netsize;else{dist+=Math.abs(n[0]-b)+Math.abs(n[2]-r);if(dist<bestd){bestd=dist;best=i;}i++;}}if(j>=0){var n2=network[j];var dist2=Math.abs(n2[1]-g);if(dist2>=bestd)j=-1;else{dist2+=Math.abs(n2[0]-b)+Math.abs(n2[2]-r);if(dist2<bestd){bestd=dist2;best=j;}j--;}}}return best;};
+  }
+
+  // LZW encoder
+  function LZWEncoder(width,height,pixels,colorDepth){
+    var EOF=-1,BITS=colorDepth,initCodeSize=Math.max(2,colorDepth);
+    var accum=new Uint8Array(256),htab=new Int32Array(5003),codetab=new Int32Array(5003);
+    var cur_accum=0,cur_bits=0,a_count=0,free_ent=0,maxcode_=0,clear_flg=false,n_bits=0;
+    var MAXBITS=12,MAXMAXCODE=1<<MAXBITS,HSIZE=5003;
+    function MAXCODE(n){return(1<<n)-1;}
+    function char_out(c,outs){accum[a_count++]=c;if(a_count>=254)flush_char(outs);}
+    function cl_block(outs){cl_hash(HSIZE);free_ent=BITS+2;clear_flg=true;output(BITS,outs);}
+    function cl_hash(s){for(var i=0;i<s;i++)htab[i]=-1;}
+    function compress(init_bits,outs){var fcode,c,i,ent,disp,hsize_reg,hshift;init_bits=init_bits;n_bits=init_bits;maxcode_=MAXCODE(n_bits);BITS=1<<init_bits-1;var clear_code=BITS,eof_code=clear_code+1;free_ent=clear_code+2;a_count=0;ent=pixels[0]&0xFF;hshift=0;for(fcode=HSIZE;fcode<65536;fcode*=2)hshift++;hshift=8-hshift;hsize_reg=HSIZE;cl_hash(hsize_reg);output(clear_code,outs);var pixIdx=1,nPix=pixels.length;outer:while(pixIdx<nPix){c=pixels[pixIdx++]&0xFF;fcode=(c<<MAXBITS)+ent;i=(c<<hshift)^ent;if(htab[i]==fcode){ent=codetab[i];continue;}else if(htab[i]>=0){disp=hsize_reg-i;if(i===0)disp=1;do{if((i-=disp)<0)i+=hsize_reg;if(htab[i]==fcode){ent=codetab[i];continue outer;}}while(htab[i]>=0);}output(ent,outs);ent=c;if(free_ent<MAXMAXCODE){codetab[i]=free_ent++;htab[i]=fcode;}else cl_block(outs);}output(ent,outs);output(eof_code,outs);}
+    function flush_char(outs){if(a_count>0){outs.writeByte(a_count);for(var i=0;i<a_count;i++)outs.writeByte(accum[i]);a_count=0;}}
+    function output(code,outs){cur_accum&=(1<<cur_bits)-1;if(cur_bits>0)cur_accum|=code<<cur_bits;else cur_accum=code;cur_bits+=n_bits;while(cur_bits>=8){char_out(cur_accum&0xFF,outs);cur_accum>>=8;cur_bits-=8;}if(free_ent>maxcode_||clear_flg){if(clear_flg){maxcode_=MAXCODE(n_bits=initCodeSize+1);clear_flg=false;}else{n_bits++;if(n_bits==MAXBITS)maxcode_=MAXMAXCODE;else maxcode_=MAXCODE(n_bits);}}if(code==EOF){while(cur_bits>0){char_out(cur_accum&0xFF,outs);cur_accum>>=8;cur_bits-=8;}flush_char(outs);}}
+    this.encode=function(os){os.writeByte(initCodeSize);pixIdx=0;compress(initCodeSize+1,os);os.writeByte(0);};
+    this.pixIdx=0;
+  }
+
+  function Encoder(){
+    this.frames=[];this.delay=10;this.repeat=0;this.transparent=null;this.width=0;this.height=0;
+  }
+  Encoder.prototype.setDelay=function(ms){this.delay=Math.round(ms/10);};
+  Encoder.prototype.setRepeat=function(r){this.repeat=r;};
+  Encoder.prototype.setTransparent=function(c){this.transparent=c;};
+  Encoder.prototype.setSize=function(w,h){this.width=w;this.height=h;};
+  Encoder.prototype.addFrame=function(ctx){
+    var imgd=ctx.getImageData(0,0,this.width,this.height);
+    this.frames.push(imgd);
+  };
+  Encoder.prototype.render=function(){
+    var out=new ByteArray();
+    var W=this.width,H=this.height;
+    // Header
+    out.writeString('GIF89a');
+    out.writeShort(W);out.writeShort(H);
+    out.writeByte(0xF7); // global color table, 256 colors
+    out.writeByte(0);    // background index
+    out.writeByte(0);    // pixel aspect
+    // Write temporary palette (will overwrite per frame via local CT)
+    for(var i=0;i<256;i++){out.writeByte(i);out.writeByte(i);out.writeByte(i);}
+    // Netscape loop extension
+    if(this.repeat>=0){
+      out.writeByte(0x21);out.writeByte(0xFF);out.writeByte(11);
+      out.writeString('NETSCAPE2.0');
+      out.writeByte(3);out.writeByte(1);
+      out.writeShort(this.repeat);out.writeByte(0);
+    }
+    for(var fi=0;fi<this.frames.length;fi++){
+      var imgd=this.frames[fi];
+      var pixels=new Uint8Array(imgd.data.buffer);
+      // Quantize
+      var nq=new NeuQuant(pixels,10);
+      var cmap=nq.process();
+      // Map pixels to palette
+      var indexedPixels=new Uint8Array(W*H);
+      var k=0;
+      for(var py=0;py<H;py++){
+        for(var px=0;px<W;px++){
+          var idx=(py*W+px)*4;
+          indexedPixels[k++]=nq.map(pixels[idx],pixels[idx+1],pixels[idx+2]);
+        }
+      }
+      // Graphic control extension
+      out.writeByte(0x21);out.writeByte(0xF9);out.writeByte(4);
+      out.writeByte(0);
+      out.writeShort(this.delay);
+      out.writeByte(0);out.writeByte(0);
+      // Image descriptor with local color table
+      out.writeByte(0x2C);
+      out.writeShort(0);out.writeShort(0);out.writeShort(W);out.writeShort(H);
+      out.writeByte(0x87); // local color table, 256 colors, interlace off
+      // Local color table
+      for(var ci=0;ci<256;ci++){
+        out.writeByte(cmap[ci*3]||0);
+        out.writeByte(cmap[ci*3+1]||0);
+        out.writeByte(cmap[ci*3+2]||0);
+      }
+      // LZW
+      var lzw=new LZWEncoder(W,H,indexedPixels,8);
+      lzw.pixels=indexedPixels;
+      lzw.encode(out);
+    }
+    out.writeByte(0x3B); // trailer
+    return new Uint8Array(out.getData());
+  };
+  return Encoder;
+})();
+
 // ═══════════════════════════════════════════════
 // PLAY BUILDER
 // ═══════════════════════════════════════════════
@@ -1466,69 +1583,90 @@ wireBtn('pbtn-del-step',()=>{
 });
 
 // GIF Export using gif.js
-document.getElementById('pbtn-gif').onclick=async()=>{
+wireBtn('pbtn-gif', async()=>{
   if(playSteps.length<2){alert('Record at least 2 steps first!');return;}
   const btn=document.getElementById('pbtn-gif');
   btn.textContent='⏳ Building...';btn.disabled=true;
 
-  // Load gif.js dynamically
-  if(!window.GIF){
-    await new Promise((res,rej)=>{
-      const s=document.createElement('script');
-      s.src='https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.js';
-      s.onload=res;s.onerror=rej;document.head.appendChild(s);
-    });
-  }
-
-  const fps=12, spd=parseInt(document.getElementById('play-speed').value);
+  const fps=12;
+  const spd=parseInt(document.getElementById('play-speed').value);
   const frameDur=Math.round(1000/fps);
-  const framesPerStep=Math.round(spd/1000*fps);
-  const pauseFrames=Math.max(2,Math.round(framesPerStep*0.3));
+  const framesPerStep=Math.max(4,Math.round(spd/1000*fps));
+  const pauseFrames=Math.max(3,Math.round(framesPerStep*0.4));
 
-  const gif=new GIF({workers:2,quality:8,width:W,height:H,workerScript:'https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.worker.js'});
+  // Save current state to restore after
+  const savedTokens=tokens.map(t=>({no:t.player.no,side:t.side,fx:t.fx,fy:t.fy}));
+  const savedBall=ball?{...ball}:null;
+  const savedDrawings=JSON.parse(JSON.stringify(drawings));
 
-  // Render frames for each step transition
+  const enc=new GIFEncoder();
+  enc.setSize(W,H);
+  enc.setRepeat(0);
+  enc.setDelay(frameDur);
+
+  // Render each transition
   for(let si=0;si<playSteps.length;si++){
     const from=si===0?playSteps[playSteps.length-1]:playSteps[si-1];
     const to=playSteps[si];
-
     for(let f=0;f<=framesPerStep;f++){
       const t=f/framesPerStep;
       const e=t<0.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
-
-      // Snap token positions to interpolated
       to.tokens.forEach(st=>{
         const fromT=from.tokens.find(x=>x.playerNo===st.playerNo&&x.side===st.side)||st;
         const tok=tokens.find(x=>x.player.no===st.playerNo&&x.side===st.side);
         if(tok){tok.fx=fromT.fx+(st.fx-fromT.fx)*e;tok.fy=fromT.fy+(st.fy-fromT.fy)*e;}
       });
-
-      // Ball interpolation
-      if(from.ball&&to.ball){
-        ball={fx:from.ball.fx+(to.ball.fx-from.ball.fx)*e,fy:from.ball.fy+(to.ball.fy-from.ball.fy)*e};
-      } else { ball=to.ball?{...to.ball}:null; }
-
-      // Drawings fade in second half
+      if(from.ball&&to.ball){ball={fx:from.ball.fx+(to.ball.fx-from.ball.fx)*e,fy:from.ball.fy+(to.ball.fy-from.ball.fy)*e};}
+      else{ball=to.ball?{...to.ball}:null;}
+      // Build movement arrows for this frame
+      tweenArrows={
+        progress:t,
+        players:from.tokens.map(fr=>{
+          const toT=to.tokens.find(x=>x.playerNo===fr.playerNo&&x.side===fr.side);if(!toT)return null;
+          const teamKey=fr.side==='home'?homeTeam:awayTeam;
+          const col=(teamKey&&TEAMS[teamKey])?TEAMS[teamKey].color:'#fff';
+          return{x1:fr.fx,y1:fr.fy,x2:toT.fx,y2:toT.fy,col};
+        }).filter(Boolean),
+        ball:(()=>{
+          if(!from.ball||!to.ball)return null;
+          const bx1=from.ball.fx,by1=from.ball.fy,bx2=to.ball.fx,by2=to.ball.fy;
+          const threshold=0.04;
+          const isDribble=from.tokens.some(fr=>{
+            const toT=to.tokens.find(x=>x.playerNo===fr.playerNo&&x.side===fr.side);if(!toT)return false;
+            return Math.hypot(fr.fx-bx1,fr.fy-by1)<threshold&&Math.hypot(toT.fx-bx2,toT.fy-by2)<threshold;
+          });
+          return isDribble?null:{x1:bx1,y1:by1,x2:bx2,y2:by2};
+        })()
+      };
       drawings=t>0.5?JSON.parse(JSON.stringify(to.drawings)):JSON.parse(JSON.stringify(from.drawings));
-
       draw();
-      gif.addFrame(cv,{copy:true,delay:frameDur});
+      enc.addFrame(ctx);
     }
-
-    // Pause on each step
+    // Pause frames on this step
+    tweenArrows=null;
+    to.tokens.forEach(st=>{const tok=tokens.find(x=>x.player.no===st.playerNo&&x.side===st.side);if(tok){tok.fx=st.fx;tok.fy=st.fy;}});
+    ball=to.ball?{...to.ball}:null;
+    drawings=JSON.parse(JSON.stringify(to.drawings));
     draw();
-    for(let p=0;p<pauseFrames;p++) gif.addFrame(cv,{copy:true,delay:frameDur*2});
+    enc.setDelay(frameDur*3);
+    for(let p=0;p<pauseFrames;p++)enc.addFrame(ctx);
+    enc.setDelay(frameDur);
   }
 
-  gif.on('finished',blob=>{
-    const url=URL.createObjectURL(blob);
-    const a=document.createElement('a');a.href=url;a.download='WC2026_Play.gif';a.click();
-    btn.textContent='🎬 Export GIF';btn.disabled=false;
-    // Restore last step
-    if(playSteps.length>0) restoreStep(currentStep,true);
-  });
-  gif.render();
-};
+  // Encode and download
+  const bytes=enc.render();
+  const blob=new Blob([bytes],{type:'image/gif'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download='WC2026_Play.gif';a.click();
+  setTimeout(()=>URL.revokeObjectURL(url),5000);
+
+  // Restore state
+  tweenArrows=null;
+  tokens.forEach(t=>{const s=savedTokens.find(x=>x.no===t.player.no&&x.side===t.side);if(s){t.fx=s.fx;t.fy=s.fy;}});
+  ball=savedBall;drawings=savedDrawings;
+  btn.textContent='🎬 GIF';btn.disabled=false;
+  draw();
+});
 
 // Update serialize/deserialize to include ball and playSteps
 const _origSerialize = serializeState;
