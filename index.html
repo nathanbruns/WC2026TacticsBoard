@@ -135,18 +135,6 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:#fff;font-famil
   <div class="rotate-sub">This app works best in landscape mode</div>
 </div>
 
-<nav style="background:linear-gradient(90deg,#3C3B6E,#1a1a3e);border-bottom:2px solid #B22234;display:flex;align-items:center;font-family:'Barlow Condensed',sans-serif">
-  <div style="display:flex;align-items:center;gap:8px;padding:8px 14px;border-right:1px solid rgba(255,255,255,.1)">
-    <div style="width:26px;height:17px;position:relative;border-radius:2px;overflow:hidden;border:1px solid rgba(255,255,255,.3);flex-shrink:0">
-      <div style="height:5.7px;background:#B22234;width:100%"></div><div style="height:5.7px;background:#fff;width:100%"></div><div style="height:5.7px;background:#B22234;width:100%"></div>
-      <div style="position:absolute;top:0;left:0;width:38%;height:66%;background:#3C3B6E"></div>
-    </div>
-    <span style="font-size:14px;font-weight:900;letter-spacing:1.5px;text-transform:uppercase;white-space:nowrap"><span style="color:#B22234">2026</span> FIFA World Cup</span>
-  </div>
-  <a href="index.html" style="padding:10px 16px;font-size:12px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:#4fc3f7;text-decoration:none;border-bottom:3px solid #4fc3f7;white-space:nowrap">⚽ Tactical Board</a>
-  <a href="groups.html" style="padding:10px 16px;font-size:12px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:#8899aa;text-decoration:none;border-bottom:3px solid transparent;white-space:nowrap;transition:.12s" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#8899aa'">📊 Group Stage</a>
-  <a href="bracket.html" style="padding:10px 16px;font-size:12px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:#8899aa;text-decoration:none;border-bottom:3px solid transparent;white-space:nowrap;transition:.12s" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#8899aa'">🏆 Bracket</a>
-</nav>
 <div class="app">
 <div class="hdr">
   <div class="hdr-l">
@@ -169,6 +157,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:#fff;font-famil
   </div>
   <div class="hdr-r">
     <button class="rate-btn" id="btn-rate">⭐ Rate Players</button>
+    <button class="clr-btn" id="btn-clear-ratings">✕ Clear Ratings</button>
     <button class="clr-btn" id="btn-clear-all">Clear All</button>
     <button class="save-btn" id="btn-save">💾 Save</button>
     <button class="load-btn" id="btn-load">📂 Saves</button>
@@ -238,6 +227,7 @@ let drawings = [];
 let dragIdx  = null, dox = 0, doy = 0;
 let tool = 'select', drawColor = '#ffffff', strokeW = 2;
 let isDrawing = false, drawStart = null, freehandPts = [];
+let ratingMode = false;
 
 const cv  = document.getElementById('cv');
 const ctx = cv.getContext('2d');
@@ -371,14 +361,33 @@ function drawStarterToken(c,p,cx2,cy2,dragging,side){
   }
 }
 function drawSubToken(c,p,cx2,cy2,dragging,side){
-  const r=Math.min(W,H)*0.022,ns=Math.max(8,Math.round(r*0.78));
-  c.save();c.globalAlpha=dragging?1.0:0.75;
+  const ns=Math.max(8,Math.round(Math.min(W,H)*0.022*0.78));
+  c.save();
+  c.globalAlpha=dragging?1.0:0.75;
   c.font=`italic 700 ${ns}px 'Barlow Condensed',Arial`;
   c.shadowColor='rgba(0,0,0,.8)';c.shadowBlur=4;
   c.fillStyle=dragging?'#f0c040':'#fff';
-  c.textAlign='center';c.textBaseline='middle';c.fillText(p.s,cx2,cy2);c.restore();
-  // Rating badge for subs
-  if(p.rating!==null&&p.rating!==undefined){const rr=Math.min(W,H)*0.022;drawRatingBadge(c,p.rating,cx2,cy2+rr*0.5,rr*0.7);}
+  c.textAlign='center';c.textBaseline='middle';
+  c.fillText(p.s,cx2,cy2);
+  c.restore();
+  // Rating badge: sits directly below the name text
+  if(p.rating!==null&&p.rating!==undefined){
+    const bh=Math.max(11,Math.round(ns*0.85));
+    const col=ratingColor(p.rating);
+    const label=p.rating%1===0?p.rating+'.0':p.rating;
+    const bw=Math.max(22,Math.round(bh*2.0));
+    const bx=cx2-bw/2;
+    const by=cy2+ns*0.6;
+    c.save();
+    c.globalAlpha=0.95;
+    c.fillStyle=col;
+    c.beginPath();c.roundRect(bx,by,bw,bh,3);c.fill();
+    c.fillStyle='#000';
+    c.font=`900 ${Math.round(bh*0.78)}px 'Barlow Condensed',Arial`;
+    c.textAlign='center';c.textBaseline='middle';
+    c.fillText(label,cx2,by+bh/2);
+    c.restore();
+  }
 }
 
 // ── CANVAS EVENTS ──
@@ -420,7 +429,10 @@ cv.addEventListener('mousemove',e=>{
 });
 cv.addEventListener('mouseup',e=>{
   const{x,y}=ptXY(e);
-  if(tool==='select'){if(dragIdx!==null){dragIdx=null;cv.style.cursor='default';draw();}return;}
+  if(tool==='select'){
+    if(dragIdx!==null){dragIdx=null;cv.style.cursor='default';draw();}
+    return;
+  }
   if(!isDrawing)return;isDrawing=false;
   if(tool==='freehand'){if(freehandPts.length>2)drawings.push({type:'freehand',color:drawColor,w:strokeW,pts:[...freehandPts]});freehandPts=[];draw();return;}
   const shape=buildPreview(x,y);if(shape&&dist(drawStart.x,drawStart.y,x,y)>6)drawings.push(shape);drawStart=null;draw();
@@ -480,11 +492,19 @@ document.querySelectorAll('[data-w]').forEach(el=>{
 });
 document.getElementById('btn-undo').onclick=()=>{drawings.pop();draw();};
 document.getElementById('btn-clear-draw').onclick=()=>{if(confirm('Clear all drawings?')){drawings=[];draw();}};
+document.getElementById('btn-clear-ratings').onclick=()=>{
+  if(tokens.every(t=>t.player.rating==null)){return;}
+  if(confirm('Clear all player ratings?')){
+    tokens.forEach(t=>{ delete t.player.rating; });
+    draw();
+  }
+};
 document.getElementById('btn-clear-all').onclick=()=>{if(confirm('Clear everything?')){tokens=[];drawings=[];draw();renderPanels();}};
 
 // ── RATING MODE ──
 document.getElementById('btn-rate').onclick=function(){
   ratingMode=!ratingMode;
+  dragIdx=null; // cancel any in-progress drag
   this.classList.toggle('active',ratingMode);
   this.textContent=ratingMode?'✓ Rating Mode':'⭐ Rate Players';
   cv.style.cursor=ratingMode?'pointer':'default';
