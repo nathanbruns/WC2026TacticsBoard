@@ -202,6 +202,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:#fff;font-famil
   <div class="hdr-r">
     <button class="play-mode-btn" id="btn-play-mode">🎬 Play Builder</button>
     <button class="rate-btn" id="btn-rate">⭐ Rate Players</button>
+    <button class="clr-btn" id="btn-export-ratings" style="border-color:rgba(79,195,247,.4);color:var(--accent)">📋 Export Ratings</button>
     <button class="clr-btn" id="btn-clear-ratings">✕ Clear Ratings</button>
     <button class="clr-btn" id="btn-clear-all">Clear All</button>
     <button class="save-btn" id="btn-save">💾 Save</button>
@@ -387,19 +388,23 @@ function ratingColor(r){
   return'#ef4444';            // red — awful
 }
 
-function drawRatingBadge(c,rating,cx2,cy2,r){
+function drawRatingBadge(c,rating,cx2,byStart){
   if(rating===null||rating===undefined)return;
   const col=ratingColor(rating);
-  const bw=Math.max(24,Math.round(r*0.88));
-  const bh=Math.max(13,Math.round(r*0.48));
-  const bx=cx2+r*0.3; // right side of name pill
-  const by=cy2+r+2+Math.max(8,Math.round(r*0.52))+2; // just below name pill
+  const bw=Math.max(36,Math.round(byStart*0)); // unused, kept for compat
+  // Fixed sizes — large and readable
+  const BW=42, BH=20;
+  const bx=cx2;
+  const by=byStart;
+  const label=rating%1===0?rating+'.0':String(rating);
   c.save();
+  c.shadowColor='rgba(0,0,0,.7)';c.shadowBlur=5;
   c.fillStyle=col;
-  c.beginPath();c.roundRect(bx-bw/2,by,bw,bh,3);c.fill();
-  c.fillStyle='#000';c.font=`900 ${Math.round(bh*0.75)}px 'Barlow Condensed',Arial`;
+  c.beginPath();c.roundRect(bx-BW/2,by,BW,BH,4);c.fill();
+  c.shadowBlur=0;
+  c.fillStyle='#000';c.font=`900 ${Math.round(BH*0.78)}px 'Barlow Condensed',Arial`;
   c.textAlign='center';c.textBaseline='middle';
-  c.fillText(rating%1===0?rating+'.0':rating,bx,by+bh/2);
+  c.fillText(label,bx,by+BH/2);
   c.restore();
 }
 
@@ -419,13 +424,16 @@ function drawStarterToken(c,p,cx2,cy2,dragging,side){
   c.beginPath();c.arc(cx2,cy2,r,0,Math.PI*2);c.fillStyle=col+'22';c.fill();
   c.fillStyle='#111';c.font=`900 ${Math.round(r*1.2)}px 'Barlow Condensed',Arial`;
   c.textAlign='center';c.textBaseline='middle';c.fillText(p.no,cx2,cy2);
-  const ns=Math.max(8,Math.round(r*0.52));
-  c.font=`700 ${ns}px 'Barlow Condensed',Arial`;const tw=c.measureText(p.s).width;
-  c.fillStyle='rgba(0,0,0,.7)';c.beginPath();c.roundRect(cx2-tw/2-5,cy2+r+2,tw+10,ns+5,3);c.fill();
-  c.fillStyle='#fff';c.textAlign='center';c.textBaseline='top';c.fillText(p.s,cx2,cy2+r+4);
-  // Rating badge
+  const ns=Math.max(11,Math.round(r*0.72));
+  c.font=`800 ${ns}px 'Barlow Condensed',Arial`;const tw=c.measureText(p.s).width;
+  c.fillStyle='rgba(0,0,0,.75)';c.beginPath();c.roundRect(cx2-tw/2-6,cy2+r+2,tw+12,ns+6,3);c.fill();
+  c.fillStyle='#fff';c.textAlign='center';c.textBaseline='top';c.fillText(p.s,cx2,cy2+r+5);
+  // Rating badge — positioned below the name pill
   const rating=p.rating;
-  if(rating!==null&&rating!==undefined)drawRatingBadge(c,rating,cx2,cy2,r);
+  if(rating!==null&&rating!==undefined){
+    const namePillBottom = cy2+r+2 + (ns+6) + 3; // circle bottom + pill height + gap
+    drawRatingBadge(c,rating,cx2,namePillBottom);
+  }
   // Rating mode highlight ring
   if(ratingMode){
     c.beginPath();c.arc(cx2,cy2,r+4,0,Math.PI*2);
@@ -433,7 +441,7 @@ function drawStarterToken(c,p,cx2,cy2,dragging,side){
   }
 }
 function drawSubToken(c,p,cx2,cy2,dragging,side){
-  const ns=Math.max(8,Math.round(Math.min(W,H)*0.022*0.78));
+  const ns=Math.max(11,Math.round(Math.min(W,H)*0.022*1.05));
   c.save();
   c.globalAlpha=dragging?1.0:0.75;
   c.font=`italic 700 ${ns}px 'Barlow Condensed',Arial`;
@@ -444,21 +452,9 @@ function drawSubToken(c,p,cx2,cy2,dragging,side){
   c.restore();
   // Rating badge: sits directly below the name text
   if(p.rating!==null&&p.rating!==undefined){
-    const bh=Math.max(11,Math.round(ns*0.85));
-    const col=ratingColor(p.rating);
-    const label=p.rating%1===0?p.rating+'.0':p.rating;
-    const bw=Math.max(22,Math.round(bh*2.0));
-    const bx=cx2-bw/2;
-    const by=cy2+ns*0.6;
-    c.save();
-    c.globalAlpha=0.95;
-    c.fillStyle=col;
-    c.beginPath();c.roundRect(bx,by,bw,bh,3);c.fill();
-    c.fillStyle='#000';
-    c.font=`900 ${Math.round(bh*0.78)}px 'Barlow Condensed',Arial`;
-    c.textAlign='center';c.textBaseline='middle';
-    c.fillText(label,cx2,by+bh/2);
-    c.restore();
+    // Badge sits below the italic name text
+    const subPillBottom = cy2 + ns*0.6 + 3;
+    drawRatingBadge(c,p.rating,cx2,subPillBottom);
   }
 }
 
@@ -567,7 +563,7 @@ document.getElementById('btn-clear-draw').onclick=()=>{if(confirm('Clear all dra
 document.getElementById('btn-clear-ratings').onclick=()=>{
   if(tokens.every(t=>t.player.rating==null)){return;}
   if(confirm('Clear all player ratings?')){
-    tokens.forEach(t=>{ delete t.player.rating; });
+    tokens.forEach(t=>{ delete t.player.rating; delete t.player.comment; });
     draw();
   }
 };
@@ -617,50 +613,75 @@ function openRatingPopup(tokenIdx,canvasX,canvasY){
   dispWrap.appendChild(disp);
   body.appendChild(dispWrap);
 
-  // Quick preset buttons — common ratings
-  const presets=[5.0,5.5,6.0,6.5,7.0,7.5,8.0,8.5,9.0,9.5,10.0];
-  const presetWrap=document.createElement('div');presetWrap.style.cssText='display:grid;grid-template-columns:repeat(6,1fr);gap:4px';
-  presets.forEach(v=>{
-    const btn=document.createElement('button');
-    const col=ratingColor(v);
-    btn.style.cssText=`padding:6px 2px;border-radius:4px;border:1.5px solid ${col};background:${col}22;color:${col};font-family:inherit;font-size:12px;font-weight:900;cursor:pointer;transition:.1s`;
-    btn.textContent=v%1===0?v+'.0':v;
-    if(existing===v)btn.style.background=col+'55';
-    btn.onclick=()=>{
-      p.rating=v;
-      updateDisp(v);
-      // Flash all buttons to show selection
-      presetWrap.querySelectorAll('button').forEach(b=>b.style.background=col+'22');
-      btn.style.background=col+'55';
-      draw();
-    };
-    presetWrap.appendChild(btn);
-  });
-  body.appendChild(presetWrap);
+  // Slider row
+  const sliderWrap=document.createElement('div');sliderWrap.style.cssText='display:flex;flex-direction:column;gap:6px';
 
-  // Manual input
-  const manualRow=document.createElement('div');manualRow.style.cssText='display:flex;align-items:center;gap:8px';
-  const manLabel=document.createElement('div');manLabel.style.cssText='font-size:10px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--muted);flex-shrink:0';manLabel.textContent='Custom';
-  const manInp=document.createElement('input');manInp.type='number';manInp.min=1;manInp.max=10;manInp.step=0.5;
-  manInp.placeholder='e.g. 7.5';
-  manInp.value=existing!=null?existing:'';
-  manInp.style.cssText='flex:1;padding:6px 10px;background:rgba(255,255,255,.07);border:1.5px solid rgba(255,255,255,.15);border-radius:5px;color:#fff;font-family:inherit;font-size:14px;font-weight:900;outline:none';
-  manInp.onfocus=()=>manInp.style.borderColor='var(--gold)';
-  manInp.onblur=()=>manInp.style.borderColor='rgba(255,255,255,.15)';
-  manInp.oninput=()=>{
-    const v=parseFloat(manInp.value);
-    if(!isNaN(v)&&v>=1&&v<=10){p.rating=Math.round(v*2)/2;updateDisp(p.rating);draw();}
+  // Slider track
+  const sliderRow=document.createElement('div');sliderRow.style.cssText='display:flex;align-items:center;gap:10px';
+  const sliderInp=document.createElement('input');sliderInp.type='range';sliderInp.min=1;sliderInp.max=10;sliderInp.step=0.5;
+  sliderInp.value=existing!=null?existing:5;
+  sliderInp.style.cssText='flex:1;height:6px;accent-color:var(--gold);cursor:pointer;';
+
+  // Slider step labels
+  const sliderLabels=document.createElement('div');sliderLabels.style.cssText='display:flex;justify-content:space-between;padding:0 2px';
+  [1,2,3,4,5,6,7,8,9,10].forEach(n=>{
+    const lbl=document.createElement('span');
+    lbl.style.cssText='font-size:9px;font-weight:700;color:rgba(255,255,255,.3);font-family:inherit';
+    lbl.textContent=n;
+    sliderLabels.appendChild(lbl);
+  });
+
+  // Manual number input alongside slider
+  const numInp=document.createElement('input');numInp.type='number';numInp.min=1;numInp.max=10;numInp.step=0.5;
+  numInp.value=existing!=null?existing:'';
+  numInp.placeholder='—';
+  numInp.style.cssText='width:52px;padding:5px 7px;background:rgba(255,255,255,.08);border:1.5px solid rgba(255,255,255,.15);border-radius:5px;color:#fff;font-family:inherit;font-size:15px;font-weight:900;outline:none;text-align:center;flex-shrink:0';
+  numInp.onfocus=()=>numInp.style.borderColor='var(--gold)';
+  numInp.onblur=()=>numInp.style.borderColor='rgba(255,255,255,.15)';
+
+  // Sync slider → disp + numInp
+  sliderInp.oninput=()=>{
+    const v=parseFloat(sliderInp.value);
+    p.rating=v; updateDisp(v); numInp.value=v; draw();
   };
-  manualRow.appendChild(manLabel);manualRow.appendChild(manInp);
-  body.appendChild(manualRow);
+  // Sync numInp → slider + disp
+  numInp.oninput=()=>{
+    const v=parseFloat(numInp.value);
+    if(!isNaN(v)&&v>=1&&v<=10){
+      const snapped=Math.round(v*2)/2;
+      p.rating=snapped;updateDisp(snapped);sliderInp.value=snapped;draw();
+    }
+  };
+
+  // If no existing rating, don't commit until user touches slider
+  if(existing==null){ sliderInp.style.opacity='0.4'; }
+  sliderInp.addEventListener('mousedown',()=>{ sliderInp.style.opacity='1'; });
+  sliderInp.addEventListener('touchstart',()=>{ sliderInp.style.opacity='1'; },{passive:true});
+
+  sliderRow.appendChild(sliderInp);sliderRow.appendChild(numInp);
+  sliderWrap.appendChild(sliderRow);sliderWrap.appendChild(sliderLabels);
+  body.appendChild(sliderWrap);
 
   // Clear rating
+  // Comment field
+  const commentWrap=document.createElement('div');commentWrap.style.cssText='display:flex;flex-direction:column;gap:4px';
+  const commentLabel=document.createElement('div');commentLabel.style.cssText='font-size:10px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--muted)';commentLabel.textContent='Match Note';
+  const commentArea=document.createElement('textarea');
+  commentArea.placeholder='Add a note about this performance...';
+  commentArea.value=p.comment||'';
+  commentArea.style.cssText='width:100%;padding:7px 9px;background:rgba(255,255,255,.07);border:1.5px solid rgba(255,255,255,.15);border-radius:5px;color:#fff;font-family:inherit;font-size:12px;resize:none;outline:none;line-height:1.4;min-height:56px;box-sizing:border-box';
+  commentArea.onfocus=()=>commentArea.style.borderColor='rgba(79,195,247,.6)';
+  commentArea.onblur=()=>commentArea.style.borderColor='rgba(255,255,255,.15)';
+  commentArea.oninput=()=>{p.comment=commentArea.value;};
+  commentWrap.appendChild(commentLabel);commentWrap.appendChild(commentArea);
+  body.appendChild(commentWrap);
+
   const clrBtn=document.createElement('button');
   clrBtn.style.cssText='width:100%;padding:7px;border-radius:5px;border:1px solid rgba(255,255,255,.15);background:transparent;color:var(--muted);font-family:inherit;font-size:11px;font-weight:700;text-transform:uppercase;cursor:pointer;letter-spacing:.5px';
   clrBtn.textContent='Clear Rating';
   clrBtn.onmouseover=()=>{clrBtn.style.background='rgba(255,255,255,.06)';clrBtn.style.color='#fff';};
   clrBtn.onmouseout=()=>{clrBtn.style.background='transparent';clrBtn.style.color='var(--muted)';};
-  clrBtn.onclick=()=>{p.rating=undefined;ov.style.display='none';draw();};
+  clrBtn.onclick=()=>{p.rating=undefined;p.comment=undefined;ov.style.display='none';draw();};
   body.appendChild(clrBtn);
 
   box.appendChild(body);ov.appendChild(box);
@@ -811,7 +832,8 @@ function serializeState(){
       y: Math.round(t.fy*1000)/1000,
       role: t.role,
       side: t.side,
-      rating: t.player.rating ?? null
+      rating: t.player.rating ?? null,
+      comment: t.player.comment ?? null
     })),
     drawings
   };
@@ -828,6 +850,7 @@ function deserializeState(state){
     const player = TEAMS[teamKey].players.find(p=>p.no===Number(t.playerNo));
     if(!player) return;
     if(t.rating!=null) player.rating=t.rating; else delete player.rating;
+    if(t.comment!=null) player.comment=t.comment; else delete player.comment;
     // Migrate old pixel coords to fractions if needed (legacy saves had raw px values)
     let fx = t.x, fy = t.y;
     if(fx > 1 || fy > 1){
@@ -1678,6 +1701,161 @@ serializeState = function(){
 };
 
 // deserializeState fully defined above — no override needed
+
+
+// ── EXPORT RATINGS ──
+// Detect formation from starter tokens
+function detectFormation(side){
+  const starters=tokens.filter(t=>t.side===side&&t.role==='starter');
+  if(starters.length<7)return null;
+  // Count by position, exclude GK
+  const outfield=starters.filter(t=>t.player.pos!=='GK');
+  const defs=outfield.filter(t=>t.player.pos==='DEF').length;
+  const mids=outfield.filter(t=>t.player.pos==='MID').length;
+  const fwds=outfield.filter(t=>t.player.pos==='FWD').length;
+  if(defs+mids+fwds===0)return null;
+  return defs+'-'+mids+'-'+fwds;
+}
+
+document.getElementById('btn-export-ratings').onclick = ()=>{
+  const rated = tokens.filter(t=>t.player.rating!=null);
+  if(rated.length===0){ alert('No players have been rated yet.'); return; }
+
+  // Sort by rating descending
+  const sorted = [...rated].sort((a,b)=>(b.player.rating||0)-(a.player.rating||0));
+
+  const home = homeTeam || 'Home';
+  const away = awayTeam || 'Away';
+  const homeFlag = TEAMS[home]?.flag||'';
+  const awayFlag = TEAMS[away]?.flag||'';
+  const dateStr = new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+
+  function ratingColor(r){
+    if(r>=9)return'#a855f7';
+    if(r>=7.5)return'#22c55e';
+    if(r>=6)return'#f0c040';
+    if(r>=5)return'#fb923c';
+    return'#ef4444';
+  }
+  function ratingBar(r){
+    const pct=Math.round((r/10)*100);
+    const col=ratingColor(r);
+    return `<div style="width:80px;height:6px;background:rgba(255,255,255,.12);border-radius:3px;overflow:hidden;display:inline-block;vertical-align:middle;margin-right:8px"><div style="width:${pct}%;height:100%;background:${col};border-radius:3px"></div></div>`;
+  }
+  function ratingLabel(r){
+    const col=ratingColor(r);
+    const disp=r%1===0?r+'.0':r;
+    return `<span style="font-size:22px;font-weight:900;color:${col};font-family:'Barlow Condensed',Arial;line-height:1">${disp}</span>`;
+  }
+  function posOrder(pos){ return {GK:0,DEF:1,MID:2,FWD:3}[pos]||4; }
+
+  // Build rows
+  let rows='';
+  sorted.forEach((t,i)=>{
+    const p=t.player;
+    const r=p.rating;
+    const col=ratingColor(r);
+    const disp=r%1===0?r+'.0':r;
+    const comment=p.comment||'';
+    const isHome=t.side==='home';
+    const teamFlag=isHome?homeFlag:awayFlag;
+    const teamName=isHome?home:away;
+    const pos=p.pos||'';
+    const isSub=t.role==='sub';
+    const rowBg = i%2===0 ? 'rgba(255,255,255,.03)' : 'transparent';
+
+    rows+=`<tr style="background:${rowBg};border-bottom:1px solid rgba(255,255,255,.06)">
+      <td style="padding:10px 14px;white-space:nowrap">
+        <span style="font-size:10px;font-weight:800;color:rgba(255,255,255,.3);font-family:'Barlow Condensed',Arial;letter-spacing:1px;margin-right:6px">#${p.no}</span>
+        <span style="font-size:14px;font-weight:800;color:#fff;font-family:'Barlow Condensed',Arial">${p.name}</span>
+        ${isSub?`<span style="font-size:9px;font-weight:700;background:rgba(255,255,255,.1);color:rgba(255,255,255,.5);border-radius:3px;padding:1px 5px;margin-left:6px;letter-spacing:.5px;font-family:'Barlow Condensed',Arial">SUB</span>`:''}
+      </td>
+      <td style="padding:10px 8px;white-space:nowrap">
+        <span style="font-size:10px;font-weight:700;color:rgba(255,255,255,.35);font-family:'Barlow Condensed',Arial;letter-spacing:.5px">${teamFlag} ${pos}</span>
+      </td>
+      <td style="padding:10px 14px;white-space:nowrap;text-align:right">
+        ${ratingBar(r)}${ratingLabel(r)}
+      </td>
+      <td style="padding:10px 16px;color:rgba(255,255,255,.7);font-size:13px;font-family:'Barlow',Arial;line-height:1.5;font-style:${comment?'normal':'italic'};color:${comment?'rgba(255,255,255,.7)':'rgba(255,255,255,.25)'}">${comment||'—'}</td>
+    </tr>`;
+  });
+
+  // Avg rating
+  const homeFm=detectFormation('home');
+  const awayFm=detectFormation('away');
+  const avg=(sorted.reduce((s,t)=>s+(t.player.rating||0),0)/sorted.length).toFixed(1);
+  const avgCol=ratingColor(parseFloat(avg));
+
+  // Snapshot the canvas at full resolution
+  const pitchSnapshot = cv.toDataURL('image/png');
+
+  const html_out=`<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Match Ratings — ${home} vs ${away}</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800;900&family=Barlow:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#0e0e1c;color:#fff;font-family:'Barlow',Arial,sans-serif;min-height:100vh;padding:32px}
+  @media print{body{background:#fff;color:#000}  .no-print{display:none}}
+</style>
+</head>
+<body>
+<div style="max-width:820px;margin:0 auto">
+
+  <!-- Header -->
+  <div style="margin-bottom:28px">
+    <div style="font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.4);font-family:'Barlow Condensed',Arial;margin-bottom:8px">${dateStr}</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+      <div>
+        <div style="font-size:32px;font-weight:900;letter-spacing:2px;text-transform:uppercase;font-family:'Barlow Condensed',Arial;line-height:1">${homeFlag} ${home} <span style="color:rgba(255,255,255,.25);font-size:20px;font-weight:500">vs</span> ${awayFlag} ${away}</div>
+        <div style="margin-top:6px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+          ${homeFm?`<span style="font-size:13px;font-weight:800;color:rgba(255,255,255,.5);font-family:'Barlow Condensed',Arial;letter-spacing:1px">${homeFlag} <span style="color:#fff">${homeFm}</span></span>`:''}
+          ${awayFm?`<span style="font-size:13px;font-weight:800;color:rgba(255,255,255,.5);font-family:'Barlow Condensed',Arial;letter-spacing:1px">${awayFlag} <span style="color:#fff">${awayFm}</span></span>`:''}
+          <span style="font-size:13px;color:rgba(255,255,255,.3);font-family:'Barlow Condensed',Arial;letter-spacing:.5px">${sorted.length} players rated</span>
+        </div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:11px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.35);font-family:'Barlow Condensed',Arial;margin-bottom:2px">Team Avg</div>
+        <div style="font-size:48px;font-weight:900;color:${avgCol};font-family:'Barlow Condensed',Arial;line-height:1">${avg}</div>
+      </div>
+    </div>
+    <div style="height:3px;background:linear-gradient(90deg,#B22234,#3C3B6E);border-radius:2px;margin-top:16px"></div>
+  </div>
+
+  <!-- Pitch snapshot -->
+  <div style="margin-bottom:24px;border-radius:10px;overflow:hidden;border:1px solid rgba(255,255,255,.1);box-shadow:0 4px 24px rgba(0,0,0,.5)">
+    <img src="${pitchSnapshot}" style="width:100%;display:block" alt="Tactical lineup">
+  </div>
+
+  <!-- Ratings table -->
+  <table style="width:100%;border-collapse:collapse;background:rgba(255,255,255,.03);border-radius:10px;overflow:hidden;border:1px solid rgba(255,255,255,.08)">
+    <thead>
+      <tr style="background:rgba(255,255,255,.05);border-bottom:1px solid rgba(255,255,255,.1)">
+        <th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.4);font-family:'Barlow Condensed',Arial">Player</th>
+        <th style="padding:10px 8px;text-align:left;font-size:10px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.4);font-family:'Barlow Condensed',Arial">Team / Pos</th>
+        <th style="padding:10px 14px;text-align:right;font-size:10px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.4);font-family:'Barlow Condensed',Arial">Rating</th>
+        <th style="padding:10px 16px;text-align:left;font-size:10px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.4);font-family:'Barlow Condensed',Arial">Note</th>
+      </tr>
+    </thead>
+    <tbody>${rows}</tbody>
+  </table>
+
+  <!-- Footer -->
+  <div style="margin-top:20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+    <div style="font-size:11px;color:rgba(255,255,255,.2);font-family:'Barlow Condensed',Arial;letter-spacing:.5px">2026 FIFA World Cup Tactical Board</div>
+    <div class="no-print" style="font-size:11px;color:rgba(255,255,255,.2);font-family:'Barlow Condensed',Arial">Print or save as PDF using Ctrl+P / Cmd+P</div>
+  </div>
+</div>
+</body>
+</html>`;
+
+  // Open in new window
+  const win=window.open('','_blank','width=900,height=700');
+  if(win){win.document.write(html_out);win.document.close();}
+  else{alert('Pop-up blocked — please allow pop-ups for this page.');}
+};
 
 // ── INIT ──
 window.addEventListener('resize',resize);
